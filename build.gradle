@@ -1,0 +1,74 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+plugins {
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.android.library) apply false
+    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.kotlin.compose) apply false
+}
+//需要发布的module注意：
+//id 'com.android.library' // 必须是 library，不能是 application
+//id 'maven-publish'       // 必须添加 Maven 发布插件
+
+// 配置所有需要发布的模块（在此处添加模块名称）
+def publishModules = ["countrypicker", "jiaozivideoplayer", "rollviewpager", "ui"]
+
+// 根目录 build.gradle
+subprojects { subproj ->
+    // 仅处理指定的发布模块
+    if (publishModules.contains(subproj.name)) {
+        apply plugin: 'maven-publish'
+        // 自动为所有Module生成发布任务
+        afterEvaluate {
+            if (plugins.hasPlugin("com.android.library")) {
+                task androidSourcesJar(type: Jar) {
+                    archiveClassifier.set("sources")
+                    from android.sourceSets.main.java.srcDirs
+                }
+                // 配置发布
+                publishing {
+                    repositories {
+                        maven {
+                            url = uri("https://gitee.com/ChenBabys/MavenChen/raw/release/")
+                            credentials {
+                                username = project.findProperty("giteeUsername") ?: ""
+                                password = project.findProperty("giteePassword") ?: ""
+                            }
+                        }
+                    }
+
+                    publications {
+                        release(MavenPublication) {
+                            // from components.release // 这种方式不行，下面的可以
+                            // 显式指定组件（适用于 AGP 7.0+）
+                            from components.findByName("release")
+                            groupId = "com.chen" // 统一的组织ID
+                            artifactId = subproj.name  // 使用模块名作为artifactId
+                            version = "1.0.0" // 统一版本号
+
+                            // 包含源码
+                            // artifacts androidSourcesJar
+
+                            // 完善POM信息（可选）
+//                            pom {
+//                                name = subproj.name
+//                                description = "Android library for ${subproj.name}"
+//                                url = 'https://gitee.com/ChenBabys/repo'
+//                                licenses {
+//                                    license {
+//                                        name = 'Apache-2.0'
+//                                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+//                                    }
+//                                }
+//                            }
+
+
+                        }
+                    }
+                }
+
+            }
+
+
+        }
+    }
+}

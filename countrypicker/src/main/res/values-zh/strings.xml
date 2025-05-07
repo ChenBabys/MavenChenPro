@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search">搜索国家/地区名称</string>
+    <string name="select_area_code">选择地区码</string>
+</resources>

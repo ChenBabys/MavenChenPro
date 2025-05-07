@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- DraggableGraduatedProgressView可拖动进度条样式 -->
+    <declare-styleable name="DraggableGraduatedProgressView">
+        <attr name="dgp_isCanDrag" format="boolean" />
+        <attr name="dgp_progressHeight" format="dimension" />
+        <attr name="dgp_progressColor" format="color" />
+        <attr name="dgp_progressBackgroundColor" format="color" />
+        <attr name="dgp_progressStartBackgroundColor" format="color" />
+        <attr name="dgp_progressCenterBackgroundColor" format="color" />
+        <attr name="dgp_progressEndBackgroundColor" format="color" />
+        <attr name="dgp_dotSliderRadius" format="dimension" />
+        <attr name="dgp_dotSliderColor" format="color" />
+        <attr name="dgp_dotSliderShadowColor" format="color" />
+        <attr name="dgp_dotSliderShadowRadius" format="dimension" />
+        <attr name="dgp_progressColorN" format="color" />
+        <attr name="dgp_dotSliderColorN" format="color" />
+        <attr name="dgp_dotSliderShadowColorN" format="color" />
+        <attr name="dgp_showDotSlider" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="QShadowLayout">
+        <attr name="isShowShadow" format="boolean" />
+        <attr name="shadowColor" format="color" />
+        <attr name="shadowSize" format="dimension" />
+        <attr name="shadowRadiusShrinkSize" format="dimension" />
+        <attr name="xAxisOffsetSize" format="dimension" />
+        <attr name="xAxisPositiveOffset" format="boolean" />
+        <attr name="yAxisOffsetSize" format="dimension" />
+        <attr name="yAxisPositiveOffset" format="boolean" />
+        <attr name="cornerRadius" format="dimension" />
+        <attr name="isOval" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="XEditText">
+        <attr name="x_separator" format="string"/>
+        <attr name="x_disableClear" format="boolean"/>
+        <attr name="x_clearDrawable" format="reference"/>
+        <attr name="x_showPwdDrawable" format="reference"/>
+        <attr name="x_hidePwdDrawable" format="reference"/>
+        <attr name="x_disableEmoji" format="boolean"/>
+        <attr name="x_togglePwdDrawableEnable" format="boolean"/>
+        <attr name="x_pattern" format="string"/>
+    </declare-styleable>
+
+</resources>

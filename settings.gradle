@@ -1,0 +1,36 @@
+pluginManagement {
+    repositories {
+        google {
+            content {
+                includeGroupByRegex("com\\.android.*")
+                includeGroupByRegex("com\\.google.*")
+                includeGroupByRegex("androidx.*")
+            }
+        }
+        mavenCentral()
+        gradlePluginPortal()
+    }
+
+    // 可选，自动映射模块名称（如果使用嵌套模块结构）
+//    rootProject.children.each { project ->
+//        if (project.name.startsWith('lib-')) {
+//            project.projectDir = new File(settingsDir, "libraries/${project.name}")
+//        }
+//    }
+
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "MavenChenPro"
+include ':app'
+include ':base'
+include ':countrypicker'
+include ':jiaozivideoplayer'
+include ':rollviewpager'
+include ':ui'
