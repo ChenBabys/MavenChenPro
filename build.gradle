@@ -28,7 +28,7 @@ subprojects { subproj ->
                 publishing {
                     repositories {
                         maven {
-                            url = uri("https://gitee.com/ChenBabys/MavenChen/raw/release/")
+                            url = uri("https://gitee.com/ChenBabys/maven-repo/raw/release/")
                             credentials {
                                 username = project.findProperty("giteeUsername") ?: ""
                                 password = project.findProperty("giteePassword") ?: ""
@@ -41,9 +41,9 @@ subprojects { subproj ->
                             // from components.release // 这种方式不行，下面的可以
                             // 显式指定组件（适用于 AGP 7.0+）
                             from components.findByName("release")
-                            groupId = "com.chen" // 统一的组织ID
+                            groupId = project.group ?: "com.chen" // 统一的组织ID
                             artifactId = subproj.name  // 使用模块名作为artifactId
-                            version = "1.0.0" // 统一版本号
+                            version = project.version ?: "1.0.0" // 统一版本号
 
                             // 包含源码
                             // artifacts androidSourcesJar
@@ -61,6 +61,12 @@ subprojects { subproj ->
 //                                }
 //                            }
 
+                                //  发布指南
+//                                  # 发布所有模块
+//                                  ./gradlew publish
+//
+//                                  # 发布单个模块（如 :countrypicker）
+//                                  ./gradlew :countrypicker:publish
 
                         }
                     }

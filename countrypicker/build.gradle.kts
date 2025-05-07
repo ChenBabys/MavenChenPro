@@ -34,6 +34,11 @@ android {
         enable = true
     }
 
+//    如果某个模块需要自定义 groupId 或 version，可以在它的 build.gradle 里覆盖：
+//    module/build.gradle
+
+//    group = "com.your.custom.group" // 覆盖根配置
+//    version = "2.0.0" // 覆盖根配置
 
 }
 
