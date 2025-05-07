@@ -9,6 +9,9 @@ plugins {
 //id 'com.android.library' // 必须是 library，不能是 application
 //id 'maven-publish'       // 必须添加 Maven 发布插件
 
+//# 如果不能上传，测试 HTTPS 连接（443 端口）
+//curl -v https://maven.pkg.github.com
+
 // 配置所有需要发布的模块（在此处添加模块名称）
 def publishModules = ["countrypicker", "jiaozivideoplayer", "rollviewpager", "ui"]
 
@@ -20,6 +23,7 @@ subprojects { subproj ->
         // 自动为所有Module生成发布任务
         afterEvaluate {
             if (plugins.hasPlugin("com.android.library")) {
+                //打包源代码的任务
                 task androidSourcesJar(type: Jar) {
                     archiveClassifier.set("sources")
                     from android.sourceSets.main.java.srcDirs
@@ -28,10 +32,17 @@ subprojects { subproj ->
                 publishing {
                     repositories {
                         maven {
-                            url = uri("https://gitee.com/ChenBabys/maven-repo/raw/release/")
+                            // url = uri("https://gitee.com/ChenBabys/maven-repo/releases")// 不发到gitee了，私有要收费，还不好用
+
+                            name = "GitHubPackages"
+                            // 注意：github的链接：你使用的 URL 包含 /releases，
+                            // 但 GitHub Packages 的标准路径是 ​**/你的用户名/你的仓库名**​（不能自定义子路径如 releases）。
+                            // 路径中不能包含 /releases 或 /raw 等自定义路径。
+                            url = uri("https://maven.pkg.github.com/ChenBabys/maven-repo")
+                            // 账号和密码从local.properties获取
                             credentials {
-                                username = project.findProperty("giteeUsername") ?: ""
-                                password = project.findProperty("giteePassword") ?: ""
+                                username = project.findProperty("githubUsername") ?: ""
+                                password = project.findProperty("githubPassword") ?: ""
                             }
                         }
                     }
@@ -67,6 +78,9 @@ subprojects { subproj ->
 //
 //                                  # 发布单个模块（如 :countrypicker）
 //                                  ./gradlew :countrypicker:publish
+
+
+//                            上传后大致路径：'https://gitee.com/ChenBabys/maven-repo/raw/releases/com/chen/countrypicker/1.0.0/countrypicker-1.0.0.pom'
 
                         }
                     }
