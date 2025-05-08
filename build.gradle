@@ -12,6 +12,8 @@ plugins {
 //# 如果不能上传，测试 HTTPS 连接（443 端口）
 //curl -v https://maven.pkg.github.com
 
+// jdk版本要17以上，并且要创建一个可以写和操作全部的token ,另外必须在github上面还得创建maven-repo的repositories，因为下面的目录用到它了
+
 // 配置所有需要发布的模块（在此处添加模块名称）
 def publishModules = ["countrypicker", "jiaozivideoplayer", "rollviewpager", "ui"]
 
@@ -31,22 +33,22 @@ subprojects { subproj ->
                 // 配置发布
                 publishing {
                     // 发布到jitpack.io 则不用这些
-//                    repositories {
-//                        maven {
-//                            // url = uri("https://gitee.com/ChenBabys/maven-repo/releases")// 不发到gitee了，私有要收费，还不好用
-//
-//                            name = "GitHubPackages"
-//                            // 注意：github的链接：你使用的 URL 包含 /releases，
-//                            // 但 GitHub Packages 的标准路径是 ​**/你的用户名/你的仓库名**​（不能自定义子路径如 releases）。
-//                            // 路径中不能包含 /releases 或 /raw 等自定义路径。
-//                            url = uri("https://maven.pkg.github.com/ChenBabys/maven-repo")
-//                            // 账号和密码从local.properties获取
-//                            credentials {
-//                                username = project.findProperty("githubUsername") ?: ""
-//                                password = project.findProperty("githubPassword") ?: ""
-//                            }
-//                        }
-//                    }
+                    repositories {
+                        maven {
+                            // url = uri("https://gitee.com/ChenBabys/maven-repo/releases")// 不发到gitee了，私有要收费，还不好用
+
+                            name = "GitHubPackages"
+                            // 注意：github的链接：你使用的 URL 包含 /releases，
+                            // 但 GitHub Packages 的标准路径是 ​**/你的用户名/你的仓库名**​（不能自定义子路径如 releases）。
+                            // 路径中不能包含 /releases 或 /raw 等自定义路径。
+                            url = uri("https://maven.pkg.github.com/ChenBabys/maven-repo")
+                            // 账号和密码从local.properties获取
+                            credentials {
+                                username = project.findProperty("githubUsername") ?: ""
+                                password = project.findProperty("githubPassword") ?: ""
+                            }
+                        }
+                    }
 
                     publications {
                         release(MavenPublication) {
