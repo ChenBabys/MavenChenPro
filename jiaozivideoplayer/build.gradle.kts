@@ -31,6 +31,12 @@ android {
         jvmTarget = "11"
     }
 
+    publishing {
+        singleVariant("release") {
+            withSourcesJar() // 可选：包含源码
+        }
+    }
+
 }
 
 dependencies {

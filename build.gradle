@@ -15,7 +15,7 @@ plugins {
 // jdk版本要17以上，并且要创建一个可以写和操作全部的token ,另外必须在github上面还得创建maven-repo的repositories，因为下面的目录用到它了
 
 // 配置所有需要发布的模块（在此处添加模块名称）
-def publishModules = ["countrypicker", "jiaozivideoplayer", "rollviewpager", "ui"]
+def publishModules = ["countrypicker", "jiaozivideoplayer", "rollviewpager", "ui", "common"]
 
 // 根目录 build.gradle
 subprojects { subproj ->
@@ -58,7 +58,7 @@ subprojects { subproj ->
 
                             groupId = project.group ?: "com.chen" // 统一的组织ID
                             artifactId = subproj.name  // 使用模块名作为artifactId
-                            version = project.version ?: "1.0.0" // 统一版本号
+                            version = project.version ?: "1.0.1" // 统一版本号
 
                             // 包含源码
                             // artifacts androidSourcesJar

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--    电池图标添加自定义属性-->
+    <declare-styleable name="BatteryCanvasView">
+        <attr name="bcv_maxBatteryLevel" format="integer" />
+        <attr name="bcv_minWidth" format="dimension" />
+        <attr name="bcv_minHeight" format="dimension" />
+        <attr name="bcv_strokeColor" format="color" />
+        <attr name="bcv_fillColor" format="color" />
+        <attr name="bcv_bgStrokeWidth" format="dimension" />
+        <attr name="bcv_bgStrokeCornerRadius" format="dimension" />
+        <attr name="bcv_showStyle" format="enum">
+            <enum name="fill" value="0" />
+            <enum name="grid" value="1" />
+        </attr>
+    </declare-styleable>
+
+    <!--  自定义的seekBar组件-->
+    <declare-styleable name="SeekBarWidget">
+        <attr name="seek_maxProgress" format="integer" />
+        <attr name="seek_minProgress" format="integer" />
+        <attr name="seek_progress" format="integer" />
+        <attr name="seek_circleRadius" format="dimension" />
+        <attr name="seek_circleStrokeWidth" format="dimension" />
+        <attr name="seek_lineHeight" format="dimension" />
+        <attr name="seek_backgroundColor" format="color" />
+        <attr name="seek_circleStrokeColor" format="color" />
+        <!-- 如果不设置seek_startColor，那么进度条就只有maxColor是进度色-->
+        <attr name="seek_maxColor" format="color" />
+        <attr name="seek_startColor" format="color" />
+    </declare-styleable>
+
+
+    <!--    圆形进度条-->
+    <declare-styleable name="CircularProgressView">
+        <attr name="circular_progress" format="float" />
+        <attr name="circular_maxProgress" format="float" />
+        <attr name="circular_strokeWidth" format="dimension" />
+        <attr name="circular_bgColor" format="color" />
+        <attr name="circular_progressColor" format="color" />
+        <attr name="circular_textColor" format="color" />
+        <attr name="circular_textSize" format="dimension" />
+        <attr name="circular_showText" format="boolean" />
+    </declare-styleable>
+
+    <!--  自定义的另一个seekBar,不整最小值了，默认都是0，外部自己转换即可-->
+    <declare-styleable name="CustomSeekBar">
+        <!--  默认的粗细，横向时是高度，纵向时是宽度-->
+        <attr name="csb_line_weight" format="dimension" />
+        <attr name="csb_max_progress" format="integer" />
+        <attr name="csb_background_color" format="color" />
+        <!-- 给0则为不绘制进度颜色-->
+        <attr name="csb_progress_color" format="color|integer" />
+        <attr name="csb_thumb_color" format="color" />
+        <attr name="csb_thumb_stroke_and_inner_color" format="color" />
+        <attr name="csb_corner_radius" format="dimension" />
+        <attr name="csb_thumb_radius" format="dimension" />
+        <attr name="csb_orientation" format="enum">
+            <enum name="horizontal" value="0" />
+            <enum name="vertical" value="1" />
+        </attr>
+        <attr name="csb_stroke_width" format="dimension" />
+        <attr name="csb_is_long_touch_to_available" format="boolean" />
+    </declare-styleable>
+
+
+    <!--  自定义的颜色seekbar，这俩-->
+    <declare-styleable name="ColorSeekBar">
+        <attr name="colorSeekBarColorSeeds" format="reference" />
+        <attr name="colorSeekBarBarHeight" format="dimension" />
+        <attr name="colorSeekBarProgress" format="integer" />
+        <attr name="colorSeekBarRadius" format="dimension" />
+        <attr name="colorSeekBarMaxProgress" format="integer" />
+        <attr name="colorSeekBarVertical" format="boolean" />
+        <attr name="colorSeekBarShowThumb" format="boolean" />
+        <attr name="colorSeekBarBorderColor" format="color" />
+        <attr name="colorSeekBarBorderSize" format="dimension" />
+    </declare-styleable>
+
+    <declare-styleable name="AlphaSeekBar">
+        <attr name="alphaSeekBarHeight" format="dimension" />
+        <attr name="alphaSeekBarRadius" format="dimension" />
+        <attr name="alphaSeekBarShowGrid" format="boolean" />
+        <attr name="alphaSeekBarShowThumb" format="boolean" />
+        <attr name="alphaSeekBarSizeGrid" format="dimension" />
+        <attr name="alphaSeekBarProgress" format="integer" />
+        <attr name="alphaSeekBarVertical" format="boolean" />
+        <attr name="alphaSeekBarMaxProgress" format="integer" />
+        <attr name="alphaSeekBarBorderColor" format="color" />
+        <attr name="alphaSeekBarBorderSize" format="dimension" />
+        <attr name="alphaSeekBarDirection" format="enum">
+            <enum name="LEFT_TO_RIGHT" value="0" />
+            <enum name="RIGHT_TO_LEFT" value="1" />
+            <enum name="TOP_TO_BOTTOM" value="2" />
+            <enum name="BOTTOM_TO_TOP" value="3" />
+        </attr>
+    </declare-styleable>
+
+
+</resources>
