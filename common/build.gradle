@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
 }
 
+apply from: '../maven-publish-jitpack.gradle'
+
 android {
     namespace 'com.godox.common'
     compileSdk 34
@@ -34,6 +36,7 @@ android {
     }
 
 }
+
 
 dependencies {
     // implementation给包内用即可，app那边原本就有了，就不用api分享了

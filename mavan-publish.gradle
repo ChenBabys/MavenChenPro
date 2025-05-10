@@ -1,0 +1,68 @@
+//apply plugin: 'maven-publish'
+//
+
+//私有库可用
+
+
+//打包jar,手动发布使用
+//task androidSourcesJar(type: Jar) {
+//    archiveClassifier.set('sources')
+//    if (project.plugins.findPlugin("com.android.library")) {
+//        from android.sourceSets.main.java.srcDirs
+//    } else {
+//        from sourceSets.main.java.srcDirs
+//    }
+//}
+//
+//artifacts {
+//    if (uploadJavadocs) {
+//        archives javadocJar
+//    }
+//    if (uploadSources) {
+//        archives sourcesJar
+//    }
+//}
+//
+//group = PUBLISH_GROUP_ID
+//version = PUBLISH_VERSION
+//
+//
+//publishing {
+//
+//    publications {
+//        release(MavenPublication) {
+//            groupId group
+//            artifactId PUBLISH_ARTIFACT_ID
+//            version PUBLISH_VERSION
+//            if (project.plugins.findPlugin("com.android.library")) {
+//                artifact("$buildDir/outputs/aar/${project.getName()}-release.aar")
+//            } else {
+//                artifact("$buildDir/libs/${project.getName()}-${version}.jar")
+//            }
+//        }
+//    }
+//
+//    repositories {
+//        maven {
+//            name = "SonaType"
+//
+//            def releasesRepoUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+//            def snapshotsRepoUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+//            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+//
+//            credentials {
+//                username ossrhUsername
+//                password ossrhPassword
+//            }
+//        }
+//    }
+//
+//}
+//
+//
+////task assembleAndPublishLocally(dependsOn: ['assembleRelease']) {
+////    finalizedBy('publishToMavenLocal')
+////}
+////task assembleAndPublish(dependsOn: ['assembleRelease']) {
+////    finalizedBy('publish')
+////}

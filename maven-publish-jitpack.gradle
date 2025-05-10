@@ -1,0 +1,34 @@
+apply plugin: 'maven-publish'
+
+//手动打包，暂不需要
+//task androidSourcesJar(type: Jar) {
+//    archiveClassifier.set('sources')
+//    if (project.plugins.findPlugin("com.android.library")) {
+//        from android.sourceSets.main.java.srcDirs
+//    } else {
+//        from sourceSets.main.java.srcDirs
+//    }
+//}
+
+publishing {
+    publications {
+        release(MavenPublication) {
+            groupId = project.findProperty("groupId")
+            artifactId = project.name // 直接这样就可以拿到module的名称
+            version = project.findProperty("version")
+
+            afterEvaluate {
+                from components.release
+            }
+        }
+    }
+}
+
+
+//检查你的库是否可以安装到 mavenLocal（$HOME/.m2/repository):
+
+//        ./gradlew publishToMavenLocal
+//        // or if you named your publication "release"
+//         ./gradlew publishReleasePublicationToMavenLocal
+
+//如果上一步一切顺利，你的库就可以发布了！

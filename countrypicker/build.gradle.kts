@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
 }
 
+apply(from = "../maven-publish-jitpack.gradle")
+
 android {
     namespace = "com.sahooz.library.countrypicker"
     compileSdk = 34
@@ -41,6 +43,7 @@ android {
 //    version = "2.0.0" // 覆盖根配置
 
 }
+
 
 // 配置插件参数（如果任意一个未设置，发布将被跳过）
 // version如果带-SNAPSHOT就是发布到snapshot仓库，否则发布到release仓库

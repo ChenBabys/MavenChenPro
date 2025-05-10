@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
 }
 
+apply(from = "../maven-publish-jitpack.gradle")
+
 android {
     namespace = "cn.jzvd"
     compileSdk = 34
@@ -34,14 +36,8 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
 }
 
-//publishConfig {
-//    groupId = "cn"
-//    artifactId = "jzvd"
-//    version = "1.0.0-SNAPSHOT"
-//}

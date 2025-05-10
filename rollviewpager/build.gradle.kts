@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
 }
 
+apply(from = "../maven-publish-jitpack.gradle")
+
 android {
     namespace = "com.jude.rollviewpager"
     compileSdk = 34
@@ -39,6 +41,9 @@ dependencies {
     implementation(libs.androidx.recyclerview)
     implementation(libs.material)
 }
+
+
+
 
 //publishConfig {
 //    groupId = "com.jude"

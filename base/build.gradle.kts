@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
 }
 
+apply(from = "../maven-publish-jitpack.gradle")
+
 android {
     namespace = "com.godox.base"
     compileSdk = 34

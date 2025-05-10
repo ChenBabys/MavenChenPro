@@ -3,6 +3,11 @@ plugins {
     alias(libs.plugins.kotlin.android)
 }
 
+val publish_group_id = "com.chen"
+val publish_version = "1.0.0"
+
+apply(from = "../maven-publish-jitpack.gradle")
+
 android {
     namespace = "com.godox.ui"
     compileSdk = 34
@@ -29,6 +34,7 @@ android {
     }
 
 }
+
 
 dependencies {
     compileOnly(project(":base")) // 仅需要编译时的依赖，引用`ui`库的项目无法直接使用它
