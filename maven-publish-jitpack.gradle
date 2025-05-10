@@ -10,6 +10,8 @@ apply plugin: 'maven-publish'
 //    }
 //}
 
+//需要注意的是，JitPack 默认要求代码库（Repository）是公开的（Public），否则依赖的项目无法依赖进去
+
 publishing {
     publications {
         release(MavenPublication) {
