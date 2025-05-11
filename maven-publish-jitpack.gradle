@@ -9,7 +9,7 @@ publishing {
             artifactId = project.name // 直接这样就可以拿到module的名称
             version = project.findProperty("version")
 
-            // artifact sourceJar
+            // artifact androidSourcesJar
 
             afterEvaluate {
                 from components.release
@@ -29,7 +29,6 @@ publishing {
 //        from sourceSets.main.java.srcDirs
 //    }
 //}
-
 
 
 //检查你的库是否可以安装到 mavenLocal（$HOME/.m2/repository):
