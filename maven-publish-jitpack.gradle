@@ -36,3 +36,12 @@ publishing {
 //         ./gradlew publishReleasePublicationToMavenLocal
 
 //如果上一步一切顺利，你的库就可以发布了！
+
+
+//总结：task这段可以不用，因为jitpack会自己处理的，
+//以下这句很重要：决定了会不会上传aar,不上aar源码就不能正常引入到其他项目【它会只有jar和pom,不合理】，而上传aar后具备aar和jar都有。
+//afterEvaluate {
+//    artifact(tasks.getByName("bundleReleaseAar"))
+//}
+
+//另外还有：groupId最好是：com.github.ChenBabys【这样好像成功率都高了】,   artifactId则直接拿子包名，
