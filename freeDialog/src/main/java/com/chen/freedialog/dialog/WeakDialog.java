@@ -1,4 +1,4 @@
-package com.nhcz500.freedialog.dialog;
+package com.chen.freedialog.dialog;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -8,8 +8,6 @@ import android.view.animation.Animation;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
-import com.nhcz500.freedialog.FreeCusDialog;
 
 import java.lang.ref.WeakReference;
 

@@ -1,9 +1,9 @@
-package com.nhcz500.freedialog;
+package com.chen.freedialog;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.nhcz500.freedialog.config.DialogGravity;
+import com.chen.freedialog.config.DialogGravity;
 
 public class DialogConfigs implements Parcelable {
     protected DialogConfigs() {

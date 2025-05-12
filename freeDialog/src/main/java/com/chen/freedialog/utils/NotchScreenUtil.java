@@ -1,4 +1,4 @@
-package com.nhcz500.freedialog.utils;
+package com.chen.freedialog.utils;
 
 
 import android.content.Context;

@@ -1,4 +1,4 @@
-package com.nhcz500.freedialog;
+package com.chen.freedialog;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;

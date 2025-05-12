@@ -1,10 +1,10 @@
-package com.nhcz500.freedialog.utils;
+package com.chen.freedialog.utils;
 
 import android.graphics.Rect;
 import android.view.View;
 import android.widget.FrameLayout;
 
-import com.nhcz500.freedialog.FreeCusDialog;
+import com.chen.freedialog.FreeCusDialog;
 
 
 public class AndroidBug5497Workaround {

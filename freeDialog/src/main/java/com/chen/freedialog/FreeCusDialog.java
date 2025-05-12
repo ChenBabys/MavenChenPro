@@ -1,4 +1,4 @@
-package com.nhcz500.freedialog;
+package com.chen.freedialog;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -23,10 +23,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
-import com.nhcz500.freedialog.config.DialogGravity;
-import com.nhcz500.freedialog.dialog.WeakDialog;
-import com.nhcz500.freedialog.utils.NotchScreenUtil;
-import com.nhcz500.freedialog.utils.SoftKeyboardUtils;
+import com.chen.freedialog.config.DialogGravity;
+import com.chen.freedialog.dialog.WeakDialog;
+import com.chen.freedialog.utils.NotchScreenUtil;
+import com.chen.freedialog.utils.SoftKeyboardUtils;
 
 
 public abstract class FreeCusDialog extends DialogFragment implements

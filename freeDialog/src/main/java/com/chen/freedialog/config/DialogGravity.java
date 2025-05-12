@@ -1,4 +1,4 @@
-package com.nhcz500.freedialog.config;
+package com.chen.freedialog.config;
 
 public class DialogGravity {
     private static final int AXIS_SPECIFIED = 0x0001; //0000 0001
