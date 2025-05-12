@@ -6,6 +6,7 @@ plugins {
 apply from: '../maven-publish-jitpack.gradle'
 
 android {
+    namespace 'com.chen.freedialog'
     compileSdk 34
 
     defaultConfig {
