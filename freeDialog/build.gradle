@@ -1,0 +1,30 @@
+plugins {
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
+    //id 'kotlin-kapt'
+}
+apply from: '../maven-publish-jitpack.gradle'
+
+android {
+    compileSdk 34
+
+    defaultConfig {
+        minSdkVersion 24
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation libs.androidx.appcompat
+    implementation libs.material // 包含viewPager2
+}
