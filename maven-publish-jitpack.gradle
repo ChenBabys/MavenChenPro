@@ -12,8 +12,6 @@ publishing {
             // artifact androidSourcesJar
 
             afterEvaluate {
-                from components.release
-                // 必须有，否则不会上传aar
                 artifact(tasks.getByName("bundleReleaseAar"))
             }
         }
