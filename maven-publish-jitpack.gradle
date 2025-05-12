@@ -45,3 +45,5 @@ publishing {
 //}
 
 //另外还有：groupId最好是：com.github.ChenBabys【这样好像成功率都高了】,   artifactId则直接拿子包名，
+
+//还有一点需要注意:如果远端库是公开的，那么就要提交代码到公开库之后再新建release和tag,意思就是提交前，远端库得是公开的，再新建release和tag，然后再去jitpack 公开库处点击git it ，否则也会down不下来的
