@@ -1,6 +1,5 @@
 package com.chen.freedialog.dialog;
 
-import android.app.Dialog;
 import android.content.Context;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -8,10 +7,11 @@ import android.view.animation.Animation;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatDialog;
 
 import java.lang.ref.WeakReference;
 
-public class WeakDialog extends Dialog {
+public class WeakDialog extends AppCompatDialog {
     private WeakReference<Animation> exitAnimation;
     private WeakReference<onExit> onExit;
     private WeakReference<onKeyTrans> onKey;
