@@ -40,7 +40,7 @@ allprojects {
 module.gradle下添加
 ```
 dependencies {
-implementation 'com.github.lujing5873:FreeDialog:1.2.3'
+implementation 'com.github.ChenBabys.MavenChenPro:freeDialog:3.0.0'
 }
 ```
 ### 使用
