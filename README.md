@@ -20,3 +20,5 @@
     implementation 'com.github.ChenBabys.MavenChenPro:common:3.0.0'
     
     implementation 'com.github.ChenBabys.MavenChenPro:base:3.0.0'
+
+    implementation 'com.github.ChenBabys.MavenChenPro:freeDialog:3.0.0'
