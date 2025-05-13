@@ -327,7 +327,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
     /**
      * dialog的获取vb
      */
-    public abstract VB getViewBinding(LayoutInflater inflater, @Nullable ViewGroup container, boolean attachToRoot);
+    public abstract VB getViewBinding(LayoutInflater inflater, @Nullable ViewGroup container);
 
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
@@ -355,7 +355,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
             dialog.setTouch(this);
         }
 
-        viewBinding = getViewBinding(getLayoutInflater(), (ViewGroup) dialog.getWindow().getDecorView(), false);
+        viewBinding = getViewBinding(getLayoutInflater(), (ViewGroup) dialog.getWindow().getDecorView());
         if (viewBinding != null) {
             rootView = viewBinding.getRoot();
         } else {
