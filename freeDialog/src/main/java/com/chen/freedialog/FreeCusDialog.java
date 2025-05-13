@@ -327,7 +327,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
     /**
      * dialog的获取vb
      */
-    public abstract VB getViewBinding(LayoutInflater inflater, @Nullable ViewGroup container);
+    public abstract VB getViewBinding(@NonNull LayoutInflater inflater, @Nullable ViewGroup container);
 
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
