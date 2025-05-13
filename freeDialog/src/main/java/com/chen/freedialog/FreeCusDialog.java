@@ -363,7 +363,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
             textView.setText("no layout id");
             rootView = textView;
         }
-        createView(savedInstanceState);
+        initView(savedInstanceState);
         return super.onGetLayoutInflater(savedInstanceState);
     }
 
@@ -378,7 +378,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
      * dialog初始化view
      * @param savedInstanceState
      */
-    protected abstract void createView(Bundle savedInstanceState);
+    protected abstract void initView(Bundle savedInstanceState);
 
 
     /**
