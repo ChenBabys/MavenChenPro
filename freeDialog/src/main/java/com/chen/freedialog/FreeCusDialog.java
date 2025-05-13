@@ -37,6 +37,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
         View.OnClickListener, WeakDialog.onExit, WeakDialog.onKeyTrans, WeakDialog.Touch {
     protected VB viewBinding;
     protected View rootView;
+    private boolean isLayoutInflated = false;
     protected WeakDialog dialog;
     private View anchorView;//依附的view
     private ViewClick listener;
@@ -341,6 +342,10 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
     @NonNull
     @Override
     public LayoutInflater onGetLayoutInflater(@Nullable Bundle savedInstanceState) {
+        if (isLayoutInflated) { // 终止条件
+            return super.onGetLayoutInflater(savedInstanceState);
+        }
+        isLayoutInflated = true;
         //获取是否有config保存
         if (savedInstanceState != null) {
             configs = savedInstanceState.getParcelable(configsString);
