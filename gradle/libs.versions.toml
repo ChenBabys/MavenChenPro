@@ -38,13 +38,14 @@ blankj-utilcodex = { group = "com.blankj", name = "utilcodex", version.ref = "ut
 androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
+#提交到云端时打包时，确保这些也是可用的，不然也会打包失败，所以干脆没用到就先不引入了
 #私有库,这些库，后三个只有3.3.0，前四个有3.0.0可用
 chen-countrypicker = { module = "com.github.ChenBabys.MavenChenPro:countrypicker", version.ref = "chen-version" }
 chen-jiaozivideoplayer = { module = "com.github.ChenBabys.MavenChenPro:jiaozivideoplayer", version.ref = "chen-version" }
 chen-rollviewpager = { module = "com.github.ChenBabys.MavenChenPro:rollviewpager", version.ref = "chen-version" }
 chen-ui = { module = "com.github.ChenBabys.MavenChenPro:ui", version.ref = "chen-version" }
 #基于dialogFragment构建的通用库，开始替代弹框使用,先更新一下，暂时不用先
-chen-freeDialog = { module = "com.github.chen:freeDialog", version.ref = "chen-freedialog" }
+chen-freeDialog = { module = "com.github.ChenBabys.MavenChenPro:freeDialog", version.ref = "chen-freedialog" }
 chen-wheelview = { module = "com.github.ChenBabys.MavenChenPro:wheelview", version.ref = "chen-version" }
 chen-flowlayout = { module = "com.github.ChenBabys.MavenChenPro:flowlayout", version.ref = "chen-version" }
 

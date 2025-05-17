@@ -6,7 +6,7 @@ plugins {
 // 看了一下，jitpack 库都是以github云端版本tag为准，这里设置的好像无效，除非是那种私人的maven或者非jitpack的打包，所以这里白设置了，只有本地maven有效或者内网maven有效
 // 发布jitpack maven使用，单独的，不使用公共参数了,
 group = "com.github.chen"
-version = "1.4.0-snapshoot"
+version = "1.5.0-snapshoot"
 // 版本和group放在前
 apply from: '../maven-publish-jitpack.gradle'
 
