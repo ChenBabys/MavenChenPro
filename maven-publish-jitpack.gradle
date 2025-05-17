@@ -5,12 +5,24 @@ apply plugin: 'maven-publish'
 publishing {
     publications {
         release(MavenPublication) {
-            groupId = project.findProperty("groupId")
-            artifactId = project.name // 直接这样就可以拿到module的名称
-            version = project.findProperty("version")
+            // 使用gradle.properties中的同名字段是可以这样写，统一groupId
+            // groupId = project.findProperty("groupId")
 
-            // artifact androidSourcesJar
+            // 直接获取内部group命名,空则用公共的
+            groupId = group ?: project.findProperty("groupId")
 
+            // 直接这样就可以拿到module的名称，比如freeDialogm,common,不包含目录的
+            artifactId = project.name
+
+            // 使用gradle.properties中的同名字段是可以这样写,统一版本
+            // version = project.findProperty("version")
+
+            // 获取外部module命名版本，(或者压根不写，直接在每个module下写version版本也可)
+            version = getVersion() ?: project.findProperty("version")
+
+            // artifact androidSourcesJar //不用这句，多余的
+
+            // 获取源码aar上传，不仅仅是jar了
             afterEvaluate {
                 artifact(tasks.getByName("bundleReleaseAar"))
             }
