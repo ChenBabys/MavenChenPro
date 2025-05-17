@@ -54,6 +54,16 @@ dependencies {
     implementation project(':rollviewpager')
     implementation project(':common')
 
+    //云端
+    implementation libs.chen.countrypicker
+    implementation libs.chen.jiaozivideoplayer
+    implementation libs.chen.rollviewpager
+    implementation libs.chen.ui
+    implementation libs.chen.flowlayout
+    implementation libs.chen.freeDialog
+    implementation libs.chen.wheelview
+
+
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit
     androidTestImplementation libs.androidx.espresso.core

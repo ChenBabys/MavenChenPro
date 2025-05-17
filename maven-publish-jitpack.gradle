@@ -1,6 +1,7 @@
 apply plugin: 'maven-publish'
 
 //需要注意的是，JitPack 默认要求代码库（Repository）是公开的（Public），否则依赖的项目无法依赖进去
+// 试了一下，好像jitpack的版本号只于github的云端tag版本有关，和本地的无关，但最好是定一样的吧，因为这样好记忆一点
 
 publishing {
     publications {
