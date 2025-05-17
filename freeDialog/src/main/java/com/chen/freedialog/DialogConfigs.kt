@@ -1,94 +1,212 @@
-package com.chen.freedialog;
+package com.chen.freedialog
 
-import android.os.Parcel;
-import android.os.Parcelable;
+import android.os.Parcel
+import android.os.Parcelable
+import android.os.Parcelable.Creator
+import android.view.Gravity
+import android.view.ViewGroup
+import com.chen.freedialog.config.AnchorGravity
+import com.chen.freedialog.config.DialogAnim
 
-import com.chen.freedialog.config.DialogGravity;
+/**
+ * 弹框的配置项，
+ * 有些字段没实现的，先保留，后面逐渐丰富这个自定义组件
+ */
+class DialogConfigs : Parcelable {
+    /**
+     * 背景透明度，0透明，1完成不透明
+     * 默认一半透明度
+     */
+    @JvmField
+    var dimAmount: Float = 0.5f //遮罩层透明度
 
-public class DialogConfigs implements Parcelable {
-    protected DialogConfigs() {
+    @JvmField
+    var location: IntArray = IntArray(2)
+
+    @JvmField
+    var navBarHeight: Int = 0
+
+    @JvmField
+    var statusHeight: Int = 0 //缓存状态栏
+
+    @JvmField
+    var offsetX: Int = 0
+
+    @JvmField
+    var offsetY: Int = 0 //相对于view的x轴y轴偏移位置
+
+    @JvmField
+    var anchorViewId: Int = 0 //依附的view
+
+    @JvmField
+    var anchorGravity: Int = AnchorGravity.BOTTOM
+
+    /**
+     * 是否可以取消，返回触发之类
+     */
+    @JvmField
+    var isCancelable: Boolean = true
+
+    /**
+     * 键盘方式
+     */
+    @JvmField
+    var softMode: Int = 0
+
+    @JvmField
+    var canDrag: Boolean = false //是否可以拖拽
+
+    @JvmField
+    var timeMillis: Int = 300 //长按触发时间
+
+    @JvmField
+    var isLongClickModule: Boolean = false
+
+    @JvmField
+    var lastX: Float = 0f
+
+    @JvmField
+    var lastY: Float = 0f
+
+    @JvmField
+    var xDown: Float = 0f
+
+    @JvmField
+    var yDown: Float = 0f
+
+    @JvmField
+    var style: Int = 0
+
+    @JvmField
+    var isAttachedToAnchor: Boolean = false
+
+    /**
+     * 默认的位置，当有anchorGravity去定位时，则优先那边的值
+     */
+    @JvmField
+    var defaultGravity: Int = Gravity.CENTER
+
+    /**
+     * 返回最小宽度
+     * 因为使用了vb的缘故，所以宽高由外部代码处设置更好
+     */
+    @JvmField
+    var minWidth: Int = ViewGroup.LayoutParams.WRAP_CONTENT
+
+    /**
+     * 返回最小高度
+     * 因为使用了vb的缘故，所以宽高由外部代码处设置更好
+     */
+    @JvmField
+    var minHeight: Int = ViewGroup.LayoutParams.WRAP_CONTENT
+
+    /**
+     * 设置固定宽度，设置了固定宽度，最小宽度就无效了
+     * 因为使用了vb的缘故，所以宽高由外部代码处设置更好
+     */
+    @JvmField
+    var fixWidth: Int = ViewGroup.LayoutParams.WRAP_CONTENT
+
+    /**
+     * 设置固定高度，设置了固定高度，最小高度就无效了
+     * 因为使用了vb的缘故，所以宽高由外部代码处设置更好
+     */
+    @JvmField
+    var fixHeight: Int = ViewGroup.LayoutParams.WRAP_CONTENT
+
+    /**
+     * 点击外部是否可以取消弹框,默认可以
+     */
+    @JvmField
+    var isTouchOutSideCancelable: Boolean = true
+
+    /**
+     * 是否拦截外部的触摸事件,默认拦截
+     */
+    @JvmField
+    var isInterceptOutSideEvent: Boolean = true
+
+    /**
+     * 动画,默认淡出淡入
+     */
+    @JvmField
+    var showAnimation: Int = DialogAnim.DialogDefault
+
+
+    constructor()
+
+    private constructor(p: Parcel) {
+        dimAmount = p.readFloat()
+        location = p.createIntArray()!!
+        navBarHeight = p.readInt()
+        statusHeight = p.readInt()
+        offsetX = p.readInt()
+        offsetY = p.readInt()
+        anchorViewId = p.readInt()
+        anchorGravity = p.readInt()
+        isCancelable = p.readByte().toInt() != 0
+        softMode = p.readInt()
+        canDrag = p.readByte().toInt() != 0
+        timeMillis = p.readInt()
+        isLongClickModule = p.readByte().toInt() != 0
+        lastX = p.readFloat()
+        lastY = p.readFloat()
+        xDown = p.readFloat()
+        yDown = p.readFloat()
+        style = p.readInt()
+        isAttachedToAnchor = p.readByte().toInt() != 0
+        defaultGravity = p.readInt()
+        minWidth = p.readInt()
+        minHeight = p.readInt()
+        fixWidth = p.readInt()
+        fixHeight = p.readInt()
+        isTouchOutSideCancelable = p.readByte().toInt() != 0
+        isInterceptOutSideEvent = p.readByte().toInt() != 0
+        showAnimation = p.readInt()
     }
 
-    protected DialogConfigs(Parcel in) {
-        elevation = in.readInt();
-        dimAmount = in.readFloat();
-        location = in.createIntArray();
-        barHeight = in.readInt();
-        statusHeight = in.readInt();
-        xOffset = in.readInt();
-        yOffset = in.readInt();
-        anchorViewId = in.readInt();
-        gravity = in.readInt();
-        cancel = in.readByte() != 0;
-        softMode = in.readInt();
-        canDrag = in.readByte() != 0;
-        timeMillis = in.readInt();
-        isLongClickModule = in.readByte() != 0;
-        lastX = in.readFloat();
-        lastY = in.readFloat();
-        xDown = in.readFloat();
-        yDown = in.readFloat();
-        style = in.readInt();
-        isTrend = in.readByte() != 0;
-        isLiuHai = in.readByte() != 0;
+    override fun describeContents(): Int {
+        return 0
     }
 
-    public static final Creator<DialogConfigs> CREATOR = new Creator<DialogConfigs>() {
-        @Override
-        public DialogConfigs createFromParcel(Parcel in) {
-            return new DialogConfigs(in);
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeFloat(dimAmount)
+        dest.writeIntArray(location)
+        dest.writeInt(navBarHeight)
+        dest.writeInt(statusHeight)
+        dest.writeInt(offsetX)
+        dest.writeInt(offsetY)
+        dest.writeInt(anchorViewId)
+        dest.writeInt(anchorGravity)
+        dest.writeByte((if (isCancelable) 1 else 0).toByte())
+        dest.writeInt(softMode)
+        dest.writeByte((if (canDrag) 1 else 0).toByte())
+        dest.writeInt(timeMillis)
+        dest.writeByte((if (isLongClickModule) 1 else 0).toByte())
+        dest.writeFloat(lastX)
+        dest.writeFloat(lastY)
+        dest.writeFloat(xDown)
+        dest.writeFloat(yDown)
+        dest.writeInt(style)
+        dest.writeByte((if (isAttachedToAnchor) 1 else 0).toByte())
+        dest.writeInt(defaultGravity)
+        dest.writeInt(minWidth)
+        dest.writeInt(minHeight)
+        dest.writeInt(fixWidth)
+        dest.writeInt(fixHeight)
+        dest.writeByte((if (isTouchOutSideCancelable) 1 else 0).toByte())
+        dest.writeByte((if (isInterceptOutSideEvent) 1 else 0).toByte())
+        dest.writeInt(showAnimation)
+    }
+
+    companion object CREATOR : Creator<DialogConfigs> {
+        override fun createFromParcel(parcel: Parcel): DialogConfigs {
+            return DialogConfigs(parcel)
         }
 
-        @Override
-        public DialogConfigs[] newArray(int size) {
-            return new DialogConfigs[size];
+        override fun newArray(size: Int): Array<DialogConfigs?> {
+            return arrayOfNulls(size)
         }
-    };
-
-
-    protected int elevation=2;//0不带阴影 其他则带阴影 默认值为2
-    protected float dimAmount=-1;//遮罩层透明度
-    protected int[] location= new int[2];
-    protected int barHeight,statusHeight;//缓存状态栏
-    protected int xOffset,yOffset;//相对于view的x轴y轴偏移位置
-    protected int anchorViewId;//依附的view
-    protected int gravity= DialogGravity.CENTER;
-    protected boolean cancel=true;
-    protected int softMode;
-    protected boolean canDrag;//是否可以拖拽
-    protected int timeMillis=300; //长按触发时间
-    protected boolean isLongClickModule = false;
-    protected float lastX,lastY,xDown,yDown;
-    protected int style;
-    protected boolean isTrend;//是否动态加载数据
-    protected boolean isLiuHai;//是否有刘海
-    @Override
-    public int describeContents() {
-        return 0;
     }
 
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeInt(elevation);
-        dest.writeFloat(dimAmount);
-        dest.writeIntArray(location);
-        dest.writeInt(barHeight);
-        dest.writeInt(statusHeight);
-        dest.writeInt(xOffset);
-        dest.writeInt(yOffset);
-        dest.writeInt(anchorViewId);
-        dest.writeInt(gravity);
-        dest.writeByte((byte) (cancel ? 1 : 0));
-        dest.writeInt(softMode);
-        dest.writeByte((byte) (canDrag ? 1 : 0));
-        dest.writeInt(timeMillis);
-        dest.writeByte((byte) (isLongClickModule ? 1 : 0));
-        dest.writeFloat(lastX);
-        dest.writeFloat(lastY);
-        dest.writeFloat(xDown);
-        dest.writeFloat(yDown);
-        dest.writeInt(style);
-        dest.writeByte((byte) (isTrend ? 1 : 0));
-        dest.writeByte((byte) (isLiuHai ? 1 : 0));
-    }
 }

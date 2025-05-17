@@ -14,10 +14,12 @@
             <option value="$PROJECT_DIR$/base" />
             <option value="$PROJECT_DIR$/common" />
             <option value="$PROJECT_DIR$/countrypicker" />
+            <option value="$PROJECT_DIR$/flowlayout" />
             <option value="$PROJECT_DIR$/freeDialog" />
             <option value="$PROJECT_DIR$/jiaozivideoplayer" />
             <option value="$PROJECT_DIR$/rollviewpager" />
             <option value="$PROJECT_DIR$/ui" />
+            <option value="$PROJECT_DIR$/wheelview" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="false" />

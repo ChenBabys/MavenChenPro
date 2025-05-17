@@ -1,6 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <!-- 窗体基本属性-->
+    <style name="BaseDialogFragment" parent="@android:style/Theme.Dialog">
+        <item name="android:windowFrame">@null</item>
+        <!-- 边框 -->
+        <item name="android:windowIsFloating">true</item>
+        <!-- 是否浮现在activity之上 -->
+        <item name="android:windowIsTranslucent">true</item>
+        <!-- 无标题 -->
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <!-- 背景透明 -->
+        <item name="android:backgroundDimEnabled">true</item>
+        <!-- 模糊 -->
+        <item name="android:windowNoTitle">true</item>
+    </style>
+
     <!--从上往下-->
     <style name="DialogPositionTopToBottom" parent="android:Animation" mce_bogus="1">
         <item name="android:windowEnterAnimation">@anim/anim_dialog_position_top_bottom_enter</item>

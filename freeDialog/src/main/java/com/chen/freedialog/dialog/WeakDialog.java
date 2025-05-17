@@ -5,13 +5,14 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.animation.Animation;
 
+import androidx.activity.ComponentDialog;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatDialog;
 
 import java.lang.ref.WeakReference;
 
-public class WeakDialog extends AppCompatDialog {
+public class WeakDialog extends ComponentDialog {
     private WeakReference<Animation> exitAnimation;
     private WeakReference<onExit> onExit;
     private WeakReference<onKeyTrans> onKey;

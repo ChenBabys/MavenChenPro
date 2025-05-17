@@ -16,7 +16,6 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.widget.FrameLayout;
-import android.widget.TextView;
 
 import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
@@ -24,20 +23,18 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 import androidx.viewbinding.ViewBinding;
 
-import com.chen.freedialog.config.DialogGravity;
+import com.chen.freedialog.config.AnchorGravity;
 import com.chen.freedialog.dialog.WeakDialog;
-import com.chen.freedialog.utils.NotchScreenUtil;
+import com.chen.freedialog.utils.ScreenUtil;
 import com.chen.freedialog.utils.SoftKeyboardUtils;
 
 /**
- * 自定义的封装DialogFragment，可以使用vb
- * @param <VB>
+ * 自定义的封装DialogFragment，仅供参考了,去使用{@link BaseFreeDialogFragment}
  */
+@Deprecated // 仅供参考
 public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragment implements
         View.OnClickListener, WeakDialog.onExit, WeakDialog.onKeyTrans, WeakDialog.Touch {
     protected VB viewBinding;
-    protected View rootView;
-    private boolean isLayoutInflated = false;
     protected WeakDialog dialog;
     private View anchorView;//依附的view
     private ViewClick listener;
@@ -45,31 +42,46 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
     OnDisMissFreeDialog dismiss;
     private DialogConfigs configs = new DialogConfigs();
     private static final String configsString = "configs";
-
     DisplayMetrics screen;//缓存屏幕数据
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        //获取是否有config保存
+        if (savedInstanceState != null) {
+            configs = savedInstanceState.getParcelable(configsString);
+        }
+        //防止bundle中获取的是null
+        if (configs == null) {
+            configs = new DialogConfigs();
+        }
+    }
 
     // Rect screenV2; //dialog 实际宽高
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+        if (dialog == null) {
+            dialog = new WeakDialog(requireContext());
+            dialog.setOnKey(this);
+            dialog.setTouch(this);
+        }
         dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);//设置背景透明
         dialog.getWindow().getDecorView().setBackgroundResource(android.R.color.transparent); //设置背景
         ViewGroup view = (ViewGroup) dialog.getWindow().getDecorView();
 
-        configs.isLiuHai = NotchScreenUtil.hasNotStatus(getActivity().getWindow().getDecorView());
         view.removeAllViews();//不要其附属的子FrameLayout
 
         if (configs.anchorViewId > 0 && anchorView == null) {
             anchorView = getActivity().findViewById(configs.anchorViewId);//尝试查找view
         }
 
-        int pxElevation = dip2px(configs.elevation);
+        int pxElevation = dip2px(5);
         setDialogView(view, pxElevation);
 
         if (configs.canDrag) {
             setDrag(view);
         }
-
 
         if (anchorView != null) {
             if (anchorView.getWidth() == 0) {
@@ -96,8 +108,8 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
         if (configs.style > 0) {
             setStyle(dialog.getWindow());
         }
-        dialog.setCanceledOnTouchOutside(configs.cancel);
-        dialog.setCancelable(configs.cancel);
+        dialog.setCanceledOnTouchOutside(configs.isCancelable);
+        dialog.setCancelable(configs.isCancelable);
         dialog.setOnExit(this);
         return dialog;
     }
@@ -145,7 +157,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
     private void setDialogView(ViewGroup view, int pxElevation) {
         if (viewBinding != null) {
             if (anchorView == null) {
-                dialog.getWindow().setGravity(configs.gravity);//必须设置
+                dialog.getWindow().setGravity(configs.anchorGravity);//必须设置
             } else {
                 dialog.getWindow().setGravity(Gravity.TOP | Gravity.LEFT);//必须设置
             }
@@ -155,7 +167,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
                 dialog.getWindow().setSoftInputMode(configs.softMode | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
             }
             //因为rootView inflate的依赖的是DecorView 所以LayoutParams 必定为FrameLayout.LayoutParams
-            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) rootView.getLayoutParams();
+            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) viewBinding.getRoot().getLayoutParams();
             //设置window位布局的设置  如果为固定值的需要加上margin数值
             dialog.getWindow().setLayout(params.width > 0
                             ? params.width + pxElevation * 2 + params.leftMargin + params.rightMargin
@@ -169,58 +181,54 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
             params.rightMargin += pxElevation;
             params.topMargin += pxElevation;
             params.bottomMargin += pxElevation;
-            rootView.setElevation(pxElevation);
-            view.addView(rootView);
+            viewBinding.getRoot().setElevation(pxElevation);
+            view.addView(viewBinding.getRoot());
         }
     }
 
     private void setAnchorView(ViewGroup view, int pxElevation) {
         if (view != null) {
-            int yGravity = configs.gravity & 0xf0;//获取前4位 得到y轴
-            int xGravity = configs.gravity & 0x0f;//获取后4位 得到x轴
-            int pxYOffset = dip2px(configs.yOffset);
-            int pxXOffset = dip2px(configs.xOffset);
+            int yGravity = configs.anchorGravity & 0xf0;//获取前4位 得到y轴
+            int xGravity = configs.anchorGravity & 0x0f;//获取后4位 得到x轴
+            int pxYOffset = dip2px(configs.offsetY);
+            int pxXOffset = dip2px(configs.offsetX);
 
             measureRoot(pxElevation);
 
-            //重新设置窗口大小
-            if (!configs.isTrend) {
-                dialog.getWindow().setLayout(rootView.getMeasuredWidth() + pxElevation * 2, rootView.getMeasuredHeight() + pxElevation * 2);
-            }
-            dialog.getWindow().setGravity(DialogGravity.TOP | DialogGravity.LEFT);//必须设置
+            dialog.getWindow().setGravity(AnchorGravity.TOP | AnchorGravity.LEFT);//必须设置
             //获取window的attributes用于设置位置
             WindowManager.LayoutParams windowParams = dialog.getWindow().getAttributes();
             // 获取rootView的高宽
-            final int rHeight = rootView.getMeasuredHeight();
-            final int rWidth = rootView.getMeasuredWidth();
+            final int rHeight = viewBinding.getRoot().getMeasuredHeight();
+            final int rWidth = viewBinding.getRoot().getMeasuredWidth();
             int x = 0, y = 0;
             //location[1]已经包含了状态栏高度
 
             //处理y轴
             switch (yGravity) {
-                case DialogGravity.TOP:
-                    y = Math.max(0, configs.location[1] - (configs.isLiuHai ? configs.statusHeight : 0) + pxYOffset - rHeight - pxElevation * 2);
+                case AnchorGravity.TOP:
+                    y = Math.max(0, configs.location[1] - (configs.statusHeight) + pxYOffset - rHeight - pxElevation * 2);
                     break;
-                case DialogGravity.CENTER_VERTICAL:
-                    y = Math.max(configs.location[1] + pxYOffset - configs.statusHeight - (rHeight - anchorView.getHeight()) / 2 - pxElevation, configs.isLiuHai ? 0 : configs.statusHeight);
+                case AnchorGravity.CENTER_VERTICAL:
+                    y = Math.max(configs.location[1] + pxYOffset - configs.statusHeight - (rHeight - anchorView.getHeight()) / 2 - pxElevation, configs.statusHeight);
                     break;
                 default://BOTTOM
-                    y = Math.max(0, configs.location[1] + pxYOffset + anchorView.getHeight() - pxElevation - (configs.isLiuHai ? configs.statusHeight : 0));
+                    y = Math.max(0, configs.location[1] + pxYOffset + anchorView.getHeight() - pxElevation - (configs.statusHeight));
                     break;
             }
             //处理x轴
             switch (xGravity) {
                 //左右对齐忽略阴影
-                case DialogGravity.ALIGN_LEFT:
+                case AnchorGravity.ALIGN_LEFT:
                     x = Math.max(0, configs.location[0] + pxXOffset - pxElevation);
                     break;
-                case DialogGravity.ALIGN_RIGHT:
+                case AnchorGravity.ALIGN_RIGHT:
                     x = Math.max(0, configs.location[0] + pxXOffset - rWidth + anchorView.getWidth() - pxElevation);
                     break;
-                case DialogGravity.LEFT:
+                case AnchorGravity.LEFT:
                     x = Math.max(0, configs.location[0] + pxXOffset - rWidth - pxElevation);
                     break;
-                case DialogGravity.RIGHT:
+                case AnchorGravity.RIGHT:
                     x = Math.max(0, configs.location[0] + pxXOffset + anchorView.getWidth() - pxElevation);
                     break;
                 default: //center_horizontal
@@ -230,7 +238,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
             windowParams.x = x;
             windowParams.y = y;
             // 拥有穿透效果 dialog布局之外可以相应事件传递
-//            windowParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+            // windowParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
 
             dialog.getWindow().setAttributes(windowParams);
         }
@@ -238,18 +246,16 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
 
     //测算rootView 宽高
     private void measureRoot(int pxElevation) {
-        //因为rootView inflate的依赖的是DecorView 所以LayoutParams 必定为FrameLayout.LayoutParams
-        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) rootView.getLayoutParams();
+        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) viewBinding.getRoot().getLayoutParams();
         screen = getWindowSize();//屏幕宽高
-
         if (anchorView != null) {
             anchorView.getLocationInWindow(configs.location);
         }
         int withSpec, heightSpec;
-        int yGravity = configs.gravity & 0xf0;//获取前4位 得到y轴
-        int xGravity = configs.gravity & 0x0f;//获取后4位 得到x轴
-        configs.statusHeight = getStatusBarHeight();
-        configs.barHeight = getNavigationBarHeight();
+        int yGravity = configs.anchorGravity & 0xf0;//获取前4位 得到y轴
+        int xGravity = configs.anchorGravity & 0x0f;//获取后4位 得到x轴
+        configs.statusHeight = ScreenUtil.INSTANCE.getStatusHeight(getResources());
+        configs.navBarHeight = ScreenUtil.INSTANCE.getNavBarHeight(getResources());
         int heightMax, withMax;
         int defMaxHeight = screen.heightPixels - pxElevation * 2;
         int defMaxWith = screen.widthPixels - pxElevation * 2;
@@ -261,14 +267,14 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
 
         //处理y轴
         switch (yGravity) {
-            case DialogGravity.TOP:
+            case AnchorGravity.TOP:
                 heightMax = Math.min(defMaxHeight, configs.location[1] - configs.statusHeight - pxElevation * 2);//最大值不能超过Y
                 break;
-            case DialogGravity.CENTER_VERTICAL:
+            case AnchorGravity.CENTER_VERTICAL:
                 heightMax = Math.min(defMaxHeight, (configs.location[1] - configs.statusHeight) * 2 + anchorView.getHeight() - pxElevation * 2);
                 break;
             default://BOTTOM
-                heightMax = Math.min(defMaxHeight, screen.heightPixels - configs.location[1] - anchorView.getHeight() - configs.barHeight - pxElevation * 2);
+                heightMax = Math.min(defMaxHeight, screen.heightPixels - configs.location[1] - anchorView.getHeight() - configs.navBarHeight - pxElevation * 2);
                 break;
         }
 
@@ -276,19 +282,19 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
         //处理x轴
         switch (xGravity) {
 
-            case DialogGravity.ALIGN_LEFT:
+            case AnchorGravity.ALIGN_LEFT:
                 withMax = Math.min(defMaxWith, screen.widthPixels - configs.location[0] - pxElevation * 2);
                 break;
-            case DialogGravity.ALIGN_RIGHT:
+            case AnchorGravity.ALIGN_RIGHT:
                 withMax = Math.min(defMaxWith, configs.location[0] + anchorView.getWidth() - pxElevation * 2);
                 break;
-            case DialogGravity.LEFT:
+            case AnchorGravity.LEFT:
                 withMax = Math.min(defMaxWith, configs.location[0] - pxElevation * 2);
                 break;
-            case DialogGravity.RIGHT:
+            case AnchorGravity.RIGHT:
                 withMax = Math.min(defMaxWith, screen.widthPixels - configs.location[0] - anchorView.getWidth() - pxElevation * 2);
                 break;
-            case DialogGravity.CENTER_HORIZONTAL:
+            case AnchorGravity.CENTER_HORIZONTAL:
                 withMax = Math.min(defMaxWith, configs.location[0] * 2 + anchorView.getWidth() - pxElevation * 2);
                 break;
             default: //center_horizontal
@@ -321,14 +327,14 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
                 break;
         }
         //手动measure获取view大小 用于后续位置调整
-        rootView.measure(withSpec, heightSpec);
+        viewBinding.getRoot().measure(withSpec, heightSpec);
     }
 
 
     /**
      * dialog的获取vb
      */
-    public abstract VB getViewBinding(@NonNull LayoutInflater inflater, @Nullable ViewGroup container);
+    public abstract VB getViewBinding(LayoutInflater inflater, @Nullable ViewGroup container);
 
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
@@ -338,49 +344,22 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
         super.onSaveInstanceState(outState);
     }
 
-
-    @NonNull
-    @Override
-    public LayoutInflater onGetLayoutInflater(@Nullable Bundle savedInstanceState) {
-        if (isLayoutInflated) { // 终止条件
-            return super.onGetLayoutInflater(savedInstanceState);
-        }
-        isLayoutInflated = true;
-        //获取是否有config保存
-        if (savedInstanceState != null) {
-            configs = savedInstanceState.getParcelable(configsString);
-        }
-        //防止bundle中获取的是null
-        if (configs == null) {
-            configs = new DialogConfigs();
-        }
-        if (dialog == null) {
-            dialog = new WeakDialog(getActivity());
-            dialog.setOnKey(this);
-            dialog.setTouch(this);
-        }
-
-        viewBinding = getViewBinding(getLayoutInflater(), (ViewGroup) dialog.getWindow().getDecorView());
-        if (viewBinding != null) {
-            rootView = viewBinding.getRoot();
-        } else {
-            TextView textView = new TextView(getActivity());
-            textView.setText("no layout id");
-            rootView = textView;
-        }
-        initView(savedInstanceState);
-        return super.onGetLayoutInflater(savedInstanceState);
-    }
-
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return null;
+        viewBinding = getViewBinding(inflater, container);
+        return viewBinding.getRoot();
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        initView(savedInstanceState);
     }
 
     /**
-     * dialog初始化view
+     * dialog初始化view,之后，开始在这里处理加下来的事情
+     *
      * @param savedInstanceState
      */
     protected abstract void initView(Bundle savedInstanceState);
@@ -388,6 +367,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
 
     /**
      * dp转px
+     *
      * @param dpValue
      * @return
      */
@@ -398,8 +378,10 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
 
     /**
      * 获取状态栏高度
+     *
      * @return
      */
+    @Deprecated
     private int getStatusBarHeight() {
 //        如果是全屏了 则返回0
 //        int flags=getActivity().getWindow().getAttributes().flags;
@@ -417,7 +399,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
         return height;
     }
 
-
+    @Deprecated
     public int getNavigationBarHeight() {
         boolean hasNavigationBar = false;
         View content = getActivity().getWindow().getDecorView().findViewById(android.R.id.content);
@@ -436,6 +418,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
 
     /**
      * 获取屏幕宽高
+     *
      * @return
      */
     private DisplayMetrics getWindowSize() {
@@ -447,6 +430,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
 
     /**
      * 获取屏幕宽高
+     *
      * @return
      */
     private Rect getWindowSizeV2() {
@@ -457,7 +441,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
     }
 
     public <T extends View> T getView(@IdRes int id) {
-        return rootView.findViewById(id);
+        return viewBinding.getRoot().findViewById(id);
     }
 
     public interface ViewClick {
@@ -490,6 +474,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
 
     /**
      * 设置是否可以长按拖拽
+     *
      * @param canDrag
      * @return
      */
@@ -500,6 +485,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
 
     /**
      * 设置拖拽的长按时间
+     *
      * @param timeMillis
      * @return
      */
@@ -509,25 +495,8 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
     }
 
     /**
-     * 获取阴影值
-     * @return
-     */
-    public int getElevation() {
-        return configs.elevation;
-    }
-
-    /**
-     * 设置阴影值
-     * @param elevation
-     * @return
-     */
-    public FreeCusDialog setElevation(int elevation) {
-        configs.elevation = elevation;
-        return this;
-    }
-
-    /**
      * 获取遮罩层透明度
+     *
      * @return 0-1
      */
     public float getDimAmount() {
@@ -536,6 +505,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
 
     /**
      * 设置遮罩层透明度
+     *
      * @param dimAmount 0-1
      * @return
      */
@@ -546,56 +516,62 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
 
     /**
      * 获取是否可以取消
+     *
      * @return
      */
     public boolean isCancel() {
-        return configs.cancel;
+        return configs.isCancelable;
     }
 
     /**
      * 设置是否可以取消
+     *
      * @param cancel
      * @return
      */
     public FreeCusDialog setCancel(boolean cancel) {
-        configs.cancel = cancel;
+        configs.isCancelable = cancel;
         return this;
     }
 
     /**
      * 设置dialog位置
-     * @param xOffset  x轴偏移
-     * @param yOffset  y轴偏移
+     *
+     * @param xOffset x轴偏移
+     * @param yOffset y轴偏移
      * @return
      */
     public FreeCusDialog setAnchor(View anchorView, int xOffset, int yOffset) {
         this.anchorView = anchorView;
         configs.anchorViewId = anchorView.getId();
-        configs.xOffset = xOffset;
-        configs.yOffset = yOffset;
+        configs.offsetX = xOffset;
+        configs.offsetY = yOffset;
         return this;
     }
 
     /**
      * 获取dialog的gravity
+     *
      * @return
      */
     public int getGravity() {
-        return configs.gravity;
+        return configs.anchorGravity;
     }
 
     /**
      * 设置dialog的gravity
+     *
      * @param gravity
      * @return
      */
     public FreeCusDialog setGravity(int gravity) {
-        configs.gravity = gravity;
+        configs.anchorGravity = gravity;
         return this;
     }
 
     /**
      * 设置按键监听
+     *
      * @param listener
      * @return
      */
@@ -606,6 +582,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
 
     /**
      * 添加点击监听
+     *
      * @param ids
      */
     protected void addViewListener(int... ids) {
@@ -619,7 +596,6 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
 
     /**
      * 添加点击监听
-     *
      */
     protected void addViewListener(View... views) {
         for (View view : views) {
@@ -632,6 +608,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
 
     /**
      * 设置动画style
+     *
      * @param style
      */
     public FreeCusDialog setStyle(int style) {
@@ -641,6 +618,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
 
     /**
      * 设置softInputMode
+     *
      * @param softMode
      */
     public void setSoftMode(int softMode) {
@@ -661,8 +639,8 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
 
     @Override
     public void dismiss() {
-        if (rootView != null && rootView.findFocus() != null) {
-            SoftKeyboardUtils.hideSoftKeyboard(rootView.findFocus());
+        if (viewBinding.getRoot().findFocus() != null) {
+            SoftKeyboardUtils.hideSoftKeyboard(viewBinding.getRoot().findFocus());
         }
         if (dialog != null) {
             dialog.cancel();
@@ -671,6 +649,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
 
     /**
      * dismiss监听
+     *
      * @param dialog
      */
     @Override
@@ -681,22 +660,10 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
         }
     }
 
-    public boolean isTrend() {
-        return configs.isTrend;
-    }
-
-    /**
-     * 设置是否动态
-     * @param trend
-     * @return
-     */
-    public FreeCusDialog setTrend(boolean trend) {
-        configs.isTrend = trend;
-        return this;
-    }
 
     /**
      * dismiss监听器
+     *
      * @param dismiss
      * @return
      */
@@ -707,10 +674,11 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
 
     /**
      * 获取dialog的rootView
+     *
      * @return
      */
     public View getRootView() {
-        return rootView;
+        return viewBinding.getRoot();
     }
 
 
@@ -741,7 +709,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
         }
         super.onDestroy();
         dialog = null;
-        rootView = null;
+        viewBinding = null;
     }
 
 
