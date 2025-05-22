@@ -53,11 +53,24 @@ class DialogConfigs : Parcelable {
     @JvmField
     var softMode: Int = 0
 
+    /**
+     * 是否可以拖拽dragViewId之后都可以拖拽,具备了,当需要暂停一段时间拖拽时，可用
+     * 默认可以拖拽的
+     */
     @JvmField
-    var canDrag: Boolean = false //是否可以拖拽
+    var canDragWhenHasDragViewId: Boolean = true
 
+    /**
+     * 可以拖拽的View的id
+     */
     @JvmField
-    var timeMillis: Int = 300 //长按触发时间
+    var dragViewId: Int = 0
+
+    /**
+     * 长按触发时间，这个占时没用到
+     */
+    @JvmField
+    var timeMillis: Int = 300
 
     @JvmField
     var isLongClickModule: Boolean = false
@@ -82,6 +95,7 @@ class DialogConfigs : Parcelable {
 
     /**
      * 默认的位置，当有anchorGravity去定位时，则优先那边的值
+     * 如果有拖拽viewId,那么这个属性设置的值失效，则默认左上角了
      */
     @JvmField
     var defaultGravity: Int = Gravity.CENTER
@@ -146,7 +160,8 @@ class DialogConfigs : Parcelable {
         anchorGravity = p.readInt()
         isCancelable = p.readByte().toInt() != 0
         softMode = p.readInt()
-        canDrag = p.readByte().toInt() != 0
+        canDragWhenHasDragViewId = p.readByte().toInt() != 0
+        dragViewId = p.readInt()
         timeMillis = p.readInt()
         isLongClickModule = p.readByte().toInt() != 0
         lastX = p.readFloat()
@@ -180,7 +195,8 @@ class DialogConfigs : Parcelable {
         dest.writeInt(anchorGravity)
         dest.writeByte((if (isCancelable) 1 else 0).toByte())
         dest.writeInt(softMode)
-        dest.writeByte((if (canDrag) 1 else 0).toByte())
+        dest.writeByte((if (canDragWhenHasDragViewId) 1 else 0).toByte())
+        dest.writeInt(dragViewId)
         dest.writeInt(timeMillis)
         dest.writeByte((if (isLongClickModule) 1 else 0).toByte())
         dest.writeFloat(lastX)

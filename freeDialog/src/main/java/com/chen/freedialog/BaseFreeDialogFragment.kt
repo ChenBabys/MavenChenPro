@@ -1,5 +1,6 @@
 package com.chen.freedialog
 
+import android.annotation.SuppressLint
 import android.graphics.Color
 import android.graphics.Point
 import android.graphics.Rect
@@ -7,6 +8,7 @@ import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
@@ -38,6 +40,11 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
      */
     private var anchorView: View? = null
 
+    /**
+     * 外部传入的dialog内部viewId触发的获取的可拖拽整个dialog的touchView
+     */
+    private var dragView: View? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,14 +74,19 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
         super.onStart()
         val window = dialog!!.window
         if (window != null) {
+            //获取状态栏高度和底部栏高度
+            dialogConfig.statusHeight = ScreenUtil.getStatusHeight(resources)
+            dialogConfig.navBarHeight = ScreenUtil.getNavBarHeight(resources)
+
             window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             window.setDimAmount(dialogConfig.dimAmount)
             // 沉浸式状态栏（API 21+）,加上，避免dialogFragment被其他dialogFragment覆盖时，状态栏冒出来
             window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
             window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-
             // 动画
             setAnimation(window)
+            // 拖拽事件
+            setDragTouchEvent(window)
         }
         // 如果需要定位到某个View
         if (dialogConfig.isAttachedToAnchor && anchorView != null) {
@@ -118,10 +130,6 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
         // 横屏
         val isLandscape = ScreenUtil.isLandscape(resources)
 
-        //获取状态栏高度和底部栏高度
-        dialogConfig.statusHeight = ScreenUtil.getStatusHeight(resources)
-        dialogConfig.navBarHeight = ScreenUtil.getNavBarHeight(resources)
-
         val statusBarHeight = dialogConfig.statusHeight
         val navBarHeight = dialogConfig.navBarHeight
 
@@ -156,13 +164,8 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
         window.decorView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
 
         // 这里一定要是measured的值，否则不准确,测量到的好像都是warp的值,测量不是很准，所以如果外部有固定值，则使用
-        val dialogWidth = if (dialogConfig.fixWidth == ViewGroup.LayoutParams.WRAP_CONTENT) {
-            window.decorView.measuredWidth
-        } else dialogConfig.fixWidth
-
-        val dialogHeight = if (dialogConfig.fixWidth == ViewGroup.LayoutParams.WRAP_CONTENT) {
-            window.decorView.measuredHeight
-        } else dialogConfig.fixHeight
+        val dialogWidth = getRealDialogWidth(window.decorView.measuredWidth)
+        val dialogHeight = getRealDialogHeight(window.decorView.measuredHeight)
 
         // 计算对话框位置
         val dialogPosition = calculateDialogCoordinates(anchorRect, dialogWidth, dialogHeight, statusBarHeight, navBarHeight)
@@ -256,48 +259,86 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
     }
 
     /**
-     * 设置默认的对话框窗口参数
+     * 设置默认的对话框窗口参数,如果有拖拽的viewId，则特殊处理
+     * 如果有拖拽的viewId，则特殊处理,通过计算来居中
      */
     private fun setupDefaultDialogWindow(window: Window?) {
         if (window != null) {
-            val params = window.attributes
+            // 屏幕宽高
+            val screenWidth = resources.displayMetrics.widthPixels
+            val screenHeight = resources.displayMetrics.heightPixels
 
+            val params = window.attributes
             // 获取对话框的宽高
             window.decorView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
             // 一般测量到的都是warp宽度
-            val dialogWidth = window.decorView.measuredWidth
-            val dialogHeight = window.decorView.measuredHeight
-            params.gravity = dialogConfig.defaultGravity
+            val dialogWidth = getRealDialogWidth(window.decorView.measuredWidth)
+            val dialogHeight = getRealDialogHeight(window.decorView.measuredHeight)
+            /**
+             * 如果有拖拽的viewId，则特殊处理,通过计算来居中，初始为中间，有预置的值就用预置的，无则计算居中
+             */
+            if (dialogConfig.dragViewId != 0) {
+                // 有拖拽view,则必须如此这句
+                params.gravity = Gravity.TOP or Gravity.START
+
+                params.x = if (dialogConfig.offsetX == 0) {
+                    (screenWidth - dialogWidth) / 2
+                } else dialogConfig.offsetX
+
+                params.y = if (dialogConfig.offsetY == 0) {
+                    (screenHeight - dialogHeight) / 2
+                } else dialogConfig.offsetY
+
+            } else {
+                params.gravity = dialogConfig.defaultGravity
+            }
             setWidthAndHeightAndOther(params, dialogWidth, dialogHeight)
             window.attributes = params
         }
     }
 
     /**
+     * 通过测量的宽度传入获取更准确真实的宽度，避免有些测量不准确
+     */
+    private fun getRealDialogWidth(dialogWidth: Int): Int {
+        return if (dialogConfig.fixWidth != ViewGroup.LayoutParams.WRAP_CONTENT) {
+            dialogConfig.fixWidth
+        } else {
+            // dialogWidth合理，一般也是warp，宽度这里合理
+            if (dialogWidth > dialogConfig.minWidth) {
+                dialogWidth
+            } else {
+                dialogConfig.minWidth
+            }
+        }
+    }
+
+    /**
+     * 通过测量的高度传入获取更准确真实的高度，避免有些测量不准确
+     */
+    private fun getRealDialogHeight(dialogHeight: Int): Int {
+        return if (dialogConfig.fixHeight != ViewGroup.LayoutParams.WRAP_CONTENT) {
+            dialogConfig.fixHeight
+        } else {
+            if (dialogHeight > dialogConfig.minHeight) {
+                // 高度要绝对warp,不适用dialogHeight，可能高于实际高度，这点不同于dialogWidth
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            } else {
+                dialogConfig.minHeight
+            }
+        }
+    }
+
+    /**
      * 设置宽高 和一些其他共同配置
      * 如果没有设置固定宽度时，而设置了最小宽度，当弹框实际warp内容大于就是变为warp，同理高度一样
+     * dialogRealWidth:真是宽度
+     * dialogRealHeight：真实高度，外部都确定好了
      */
-    private fun setWidthAndHeightAndOther(params: WindowManager.LayoutParams, dialogWidth: Int, dialogHeight: Int) {
+    private fun setWidthAndHeightAndOther(params: WindowManager.LayoutParams, dialogRealWidth: Int, dialogRealHeight: Int) {
         // 宽高需要重新处理，不然就是默认warp的,因为VB的缘故
-        if (dialogConfig.fixWidth != ViewGroup.LayoutParams.WRAP_CONTENT) {
-            params.width = dialogConfig.fixWidth
-        } else {
-            if (dialogWidth > dialogConfig.minWidth) { // dialogWidth合理，一般也是warp，宽度这里合理
-                params.width = dialogWidth
-            } else {
-                params.width = dialogConfig.minWidth
-            }
-        }
-
-        if (dialogConfig.fixHeight != ViewGroup.LayoutParams.WRAP_CONTENT) {
-            params.height = dialogConfig.fixHeight
-        } else {
-            if (dialogHeight > dialogConfig.minHeight) { // 高度要绝对warp,不适用dialogHeight，可能高于实际高度
-                params.height = ViewGroup.LayoutParams.WRAP_CONTENT
-            } else {
-                params.height = dialogConfig.minHeight
-            }
-        }
+        params.width = dialogRealWidth
+        params.height = dialogRealHeight
 
         // 是否拦截外部触摸事件
         if (dialogConfig.isInterceptOutSideEvent) {
@@ -312,6 +353,69 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
         // 是否可以点击外部取消
         requireDialog().setCancelable(dialogConfig.isCancelable)
 
+    }
+
+    /**
+     * 拖拽事件的实现
+     * 不建议用requireView(),不要崩溃了
+     *
+     * 若控件左上角在屏幕中的坐标为(left, top)，则：
+     * rawX=left+X
+     * rawY=top+Y
+     */
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setDragTouchEvent(window: Window) {
+        dragView = view?.findViewById(dialogConfig.dragViewId)
+        dragView?.apply {
+            // 屏幕宽高
+            val screenWidth = resources.displayMetrics.widthPixels
+            val screenHeight = resources.displayMetrics.heightPixels
+
+            val dialogWidth = window.decorView.measuredWidth
+            val dialogHeight = window.decorView.measuredHeight
+
+            var initialX = 0
+            var initialY = 0
+
+            var initialTouchX = 0f
+            var initialTouchY = 0f
+
+            this.setOnTouchListener { v, event ->
+                if (!dialogConfig.canDragWhenHasDragViewId) {
+                    return@setOnTouchListener false
+                }
+                when (event.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        // 记录初始位置
+                        initialX = window.attributes.x
+                        initialY = window.attributes.y
+                        initialTouchX = event.rawX
+                        initialTouchY = event.rawY
+                        true
+                    }
+
+                    MotionEvent.ACTION_MOVE -> {
+                        // 计算移动距离并更新窗口位置
+                        val x = initialX + (event.rawX - initialTouchX).toInt()
+                        val y = initialY + (event.rawY - initialTouchY).toInt()
+
+                        // 更新到窗口,有了dragViewId，上面已经处理了 params.gravity了，这里不用处理了
+                        val params = window.attributes
+                        params.x = x
+                        params.y = y
+
+                        // 最终边界修正（考虑安全区域）
+                        params.x = x.coerceIn(0, screenWidth - dialogWidth)
+                        params.y = y.coerceIn(dialogConfig.statusHeight, screenHeight - dialogHeight)
+
+                        window.attributes = params
+                        true
+                    }
+
+                    else -> false
+                }
+            }
+        }
     }
 
     /**
