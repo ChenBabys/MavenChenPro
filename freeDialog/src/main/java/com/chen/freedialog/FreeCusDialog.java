@@ -79,7 +79,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
         int pxElevation = dip2px(5);
         setDialogView(view, pxElevation);
 
-        if (configs.canDrag) {
+        if (configs.canDragWhenHasDragViewId) {
             setDrag(view);
         }
 
@@ -479,7 +479,7 @@ public abstract class FreeCusDialog<VB extends ViewBinding> extends DialogFragme
      * @return
      */
     public FreeCusDialog setCanDrag(boolean canDrag) {
-        configs.canDrag = canDrag;
+        configs.canDragWhenHasDragViewId = canDrag;
         return this;
     }
 
