@@ -53,6 +53,7 @@ dependencies {
     implementation project(':countrypicker')
     implementation project(':rollviewpager')
     implementation project(':common')
+    implementation project(':androidsvg')
 
     //云端
 //    implementation libs.chen.countrypicker
