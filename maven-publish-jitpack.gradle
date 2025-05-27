@@ -9,6 +9,8 @@ publishing {
             // 使用gradle.properties中的同名字段是可以这样写，统一groupId
             // groupId = project.findProperty("groupId")
 
+            //TODO 注意：对于jitpack来说，这里groupId和version没啥用，一般都是以github的tag版本为主的，只有artifactId有用
+
             // 直接获取内部group命名,空则用公共的
             groupId = group ?: project.findProperty("groupId")
 
