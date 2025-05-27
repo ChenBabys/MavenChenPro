@@ -13,10 +13,7 @@ material = "1.12.0"
 recyclerview = "1.3.0"
 utilcodex = "1.31.1"
 
-#chen-version = "3.3.0" // 都可以
-chen-version = "1.3.0-snapshoot"
-chen-freedialog = "1.3.0"
-
+chen-version = "3.3.0" # 都可以
 
 [libraries]
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
@@ -45,7 +42,7 @@ chen-jiaozivideoplayer = { module = "com.github.ChenBabys.MavenChenPro:jiaozivid
 chen-rollviewpager = { module = "com.github.ChenBabys.MavenChenPro:rollviewpager", version.ref = "chen-version" }
 chen-ui = { module = "com.github.ChenBabys.MavenChenPro:ui", version.ref = "chen-version" }
 #基于dialogFragment构建的通用库，开始替代弹框使用,先更新一下，暂时不用先
-chen-freeDialog = { module = "com.github.ChenBabys.MavenChenPro:freeDialog", version.ref = "chen-freedialog" }
+chen-freeDialog = { module = "com.github.ChenBabys.MavenChenPro:freeDialog", version.ref = "chen-version" }
 chen-wheelview = { module = "com.github.ChenBabys.MavenChenPro:wheelview", version.ref = "chen-version" }
 chen-flowlayout = { module = "com.github.ChenBabys.MavenChenPro:flowlayout", version.ref = "chen-version" }
 
