@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.MavenChenPro" parent="android:Theme.Material.Light.NoActionBar" />
+<!--    <style name="Theme.MavenChenPro" parent="android:Theme.Material.Light.NoActionBar" />-->
+<!--    改成这样才可以兼容View和Compose,而不仅仅支持compose-->
+    <style name="Theme.MavenChenPro" parent="Theme.AppCompat.Light.DarkActionBar" />
 </resources>
