@@ -1,10 +1,15 @@
 package com.chen.mavenchen.freeDialog
 
+import android.app.Dialog
 import android.content.Context
 import android.content.DialogInterface
+import android.graphics.Rect
 import android.text.InputFilter
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
+import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import androidx.fragment.app.FragmentManager
 import com.blankj.utilcode.util.KeyboardUtils
@@ -92,19 +97,19 @@ class CommonInputValueDialog(private val fragmentManager: FragmentManager) : Bas
 
 
 
-            KeyboardUtils.showSoftInput(binding.etInput, InputMethodManager.SHOW_IMPLICIT)
+            //KeyboardUtils.showSoftInput(binding.etInput, InputMethodManager.SHOW_IMPLICIT)
 
-//            binding.etInput.isFocusable = true
-//            binding.etInput.requestFocus()
-////            binding.etInput.requestFocusFromTouch()
-//            binding.etInput.postDelayed(
-//                Runnable {
-//                    //展示输入框
-//                    val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-//                    imm.showSoftInput(binding.root, 0)
-//                },
-//                100,
-//            )
+            binding.etInput.isFocusable = true
+            binding.etInput.requestFocus()
+            //binding.etInput.requestFocusFromTouch()
+            binding.etInput.postDelayed(
+                Runnable {
+                    //展示输入框
+                    val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                    imm.showSoftInput(binding.etInput, 0)
+                },
+                100,
+            )
         }
 
     }
@@ -116,6 +121,7 @@ class CommonInputValueDialog(private val fragmentManager: FragmentManager) : Bas
 //        dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
 //        return dialog
 //    }
+
 
     fun setTitle(hintTitle: String): CommonInputValueDialog {
         config.hintTitle = hintTitle
