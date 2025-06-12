@@ -75,18 +75,23 @@ class DialogConfigs : Parcelable {
     @JvmField
     var isLongClickModule: Boolean = false
 
+    @Deprecated("暂时废弃")
     @JvmField
     var lastX: Float = 0f
 
+    @Deprecated("暂时废弃")
     @JvmField
     var lastY: Float = 0f
 
+    @Deprecated("暂时废弃")
     @JvmField
     var xDown: Float = 0f
 
+    @Deprecated("暂时废弃")
     @JvmField
     var yDown: Float = 0f
 
+    @Deprecated("暂时废弃")
     @JvmField
     var style: Int = 0
 

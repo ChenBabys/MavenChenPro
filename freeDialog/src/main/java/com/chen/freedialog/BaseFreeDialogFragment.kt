@@ -291,6 +291,15 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
 
             } else {
                 params.gravity = dialogConfig.defaultGravity
+
+                // 偏移
+                if (dialogConfig.offsetY != 0) {
+                    params.y = params.y + dialogConfig.offsetY
+                }
+
+                if (dialogConfig.offsetX != 0) {
+                    params.x = params.x + dialogConfig.offsetX
+                }
             }
             setWidthAndHeightAndOther(params, dialogWidth, dialogHeight)
             window.attributes = params

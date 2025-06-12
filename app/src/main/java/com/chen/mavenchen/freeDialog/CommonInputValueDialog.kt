@@ -1,20 +1,16 @@
 package com.chen.mavenchen.freeDialog
 
-import android.app.Dialog
 import android.content.Context
 import android.content.DialogInterface
 import android.graphics.Rect
 import android.text.InputFilter
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import android.view.ViewTreeObserver
+import android.view.Window
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import androidx.fragment.app.FragmentManager
-import com.blankj.utilcode.util.KeyboardUtils
 import com.chen.freedialog.BaseFreeDialogFragment
-import com.chen.mavenchen.R
 import com.chen.mavenchen.databinding.DialogCommonInputValueBinding
 
 
@@ -35,7 +31,8 @@ class CommonInputValueDialog(private val fragmentManager: FragmentManager) : Bas
     override fun initView(binding: DialogCommonInputValueBinding) {
         // 固定宽度
         dialogConfig.fixWidth = 800
-        dialogConfig.dragViewId = R.id.tv_title
+//        dialogConfig.dragViewId = R.id.tv_title
+        // dialogConfig.offsetY = -200
 
         //默认隐藏描述，除非输入描述
         binding.tvCancel.setOnClickListener {
@@ -96,7 +93,6 @@ class CommonInputValueDialog(private val fragmentManager: FragmentManager) : Bas
             // }
 
 
-
             //KeyboardUtils.showSoftInput(binding.etInput, InputMethodManager.SHOW_IMPLICIT)
 
             binding.etInput.isFocusable = true
@@ -118,9 +114,43 @@ class CommonInputValueDialog(private val fragmentManager: FragmentManager) : Bas
 //        val dialog = FoldInputTouchDialog(requireContext(), theme)
 //        dialog.setCancelable(dialogConfig.isTouchOutSideCancelable)
 //        dialog.setCanceledOnTouchOutside(dialogConfig.isTouchOutSideCancelable)
-//        dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+//        // 关键设置：让 Dialog 整体上移，避免键盘遮挡
+//        dialog.getWindow()?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 //        return dialog
 //    }
+
+    override fun onStart() {
+        super.onStart()
+        val dialog = getDialog()
+        if (dialog != null) {
+            val window = dialog.window
+            window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
+            // 监听键盘高度变化
+            adjustDialogPosition(window!!)
+        }
+    }
+
+    private val targetOffsetPx = 50 // 目标上移距离（键盘顶部上方50px）
+    private fun adjustDialogPosition(window: Window) {
+        // 1. 获取键盘高度
+        val visibleFrame = Rect()
+        window.decorView.getWindowVisibleDisplayFrame(visibleFrame)
+        val screenHeight = window.decorView.getRootView().height
+        // 2. 计算目标位置
+        val params = window.attributes
+
+        val yValue = params.y - 200
+
+        // 3. 应用位置调整（带平滑动画）
+        window.decorView.animate()
+            .translationY(yValue.toFloat())
+            .setDuration(100)
+            .withEndAction {
+                params.y = yValue
+                window.setAttributes(params)
+            }
+            .start()
+    }
 
 
     fun setTitle(hintTitle: String): CommonInputValueDialog {
