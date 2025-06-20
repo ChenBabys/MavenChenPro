@@ -18,7 +18,7 @@ class DialogConfigs : Parcelable {
      * 默认一半透明度
      */
     @JvmField
-    var dimAmount: Float = 0.5f //遮罩层透明度
+    var dimAmount: Float = 0.5f // 遮罩层透明度
 
     @JvmField
     var location: IntArray = IntArray(2)
@@ -27,16 +27,16 @@ class DialogConfigs : Parcelable {
     var navBarHeight: Int = 0
 
     @JvmField
-    var statusHeight: Int = 0 //缓存状态栏
+    var statusHeight: Int = 0 // 缓存状态栏
 
     @JvmField
     var offsetX: Int = 0
 
     @JvmField
-    var offsetY: Int = 0 //相对于view的x轴y轴偏移位置
+    var offsetY: Int = 0 // 相对于view的x轴y轴偏移位置
 
     @JvmField
-    var anchorViewId: Int = 0 //依附的view
+    var anchorViewId: Int = 0 // 依附的view
 
     @JvmField
     var anchorGravity: Int = AnchorGravity.BOTTOM
@@ -75,23 +75,18 @@ class DialogConfigs : Parcelable {
     @JvmField
     var isLongClickModule: Boolean = false
 
-    @Deprecated("暂时废弃")
     @JvmField
     var lastX: Float = 0f
 
-    @Deprecated("暂时废弃")
     @JvmField
     var lastY: Float = 0f
 
-    @Deprecated("暂时废弃")
     @JvmField
     var xDown: Float = 0f
 
-    @Deprecated("暂时废弃")
     @JvmField
     var yDown: Float = 0f
 
-    @Deprecated("暂时废弃")
     @JvmField
     var style: Int = 0
 
@@ -151,6 +146,15 @@ class DialogConfigs : Parcelable {
     @JvmField
     var showAnimation: Int = DialogAnim.DialogDefault
 
+    /**
+     * 使window的底部对齐输入法的顶部，否则使window内的焦点视图对齐输入法的顶部
+     */
+    var attachSoftInputByWindowBottom: Boolean = true
+
+    /**
+     * 是否适配输入法
+     */
+    var softInputAdaptive: Boolean = false
 
     constructor()
 
@@ -183,13 +187,16 @@ class DialogConfigs : Parcelable {
         isTouchOutSideCancelable = p.readByte().toInt() != 0
         isInterceptOutSideEvent = p.readByte().toInt() != 0
         showAnimation = p.readInt()
+        attachSoftInputByWindowBottom = p.readByte().toInt() != 0
+        softInputAdaptive = p.readByte().toInt() != 0
     }
 
-    override fun describeContents(): Int {
-        return 0
-    }
+    override fun describeContents(): Int = 0
 
-    override fun writeToParcel(dest: Parcel, flags: Int) {
+    override fun writeToParcel(
+        dest: Parcel,
+        flags: Int,
+    ) {
         dest.writeFloat(dimAmount)
         dest.writeIntArray(location)
         dest.writeInt(navBarHeight)
@@ -218,16 +225,13 @@ class DialogConfigs : Parcelable {
         dest.writeByte((if (isTouchOutSideCancelable) 1 else 0).toByte())
         dest.writeByte((if (isInterceptOutSideEvent) 1 else 0).toByte())
         dest.writeInt(showAnimation)
+        dest.writeByte((if (attachSoftInputByWindowBottom) 1 else 0).toByte())
+        dest.writeByte((if (softInputAdaptive) 1 else 0).toByte())
     }
 
     companion object CREATOR : Creator<DialogConfigs> {
-        override fun createFromParcel(parcel: Parcel): DialogConfigs {
-            return DialogConfigs(parcel)
-        }
+        override fun createFromParcel(parcel: Parcel): DialogConfigs = DialogConfigs(parcel)
 
-        override fun newArray(size: Int): Array<DialogConfigs?> {
-            return arrayOfNulls(size)
-        }
+        override fun newArray(size: Int): Array<DialogConfigs?> = arrayOfNulls(size)
     }
-
 }

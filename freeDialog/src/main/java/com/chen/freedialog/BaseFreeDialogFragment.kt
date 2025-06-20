@@ -10,6 +10,7 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
+import android.view.View.MeasureSpec
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
@@ -18,6 +19,7 @@ import androidx.viewbinding.ViewBinding
 import com.chen.freedialog.config.AnchorGravity
 import com.chen.freedialog.config.DialogAnim
 import com.chen.freedialog.utils.ScreenUtil
+import com.chen.freedialog.utils.SoftInputHelper
 
 /**
  * 基类。可以定位到某个View[类似PopupWindow],也可以是正常dialog
@@ -45,18 +47,26 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
      */
     private var dragView: View? = null
 
+    private var softInputHelper: SoftInputHelper? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NO_TITLE, R.style.BaseDialogFragment)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?,
+    ): View? {
         vBinding = getViewBinding(inflater, container)
         return vBinding!!.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
         super.onViewCreated(view, savedInstanceState)
         initView(binding)
     }
@@ -74,7 +84,7 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
         super.onStart()
         val window = dialog!!.window
         if (window != null) {
-            //获取状态栏高度和底部栏高度
+            // 获取状态栏高度和底部栏高度
             dialogConfig.statusHeight = ScreenUtil.getStatusHeight(resources)
             dialogConfig.navBarHeight = ScreenUtil.getNavBarHeight(resources)
 
@@ -83,6 +93,10 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
             // 沉浸式状态栏（API 21+）,加上，避免dialogFragment被其他dialogFragment覆盖时，状态栏冒出来
             window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
             window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            // 将窗口设置为不针对显示的输入法进行调整。窗口的尺寸不会改变,并且不会移动以显示其焦点。
+            if (dialogConfig.softInputAdaptive) {
+                window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
+            }
             // 动画
             setAnimation(window)
             // 拖拽事件
@@ -94,6 +108,29 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
         } else {
             // 否则使用默认的Dialog布局参数
             setupDefaultDialogWindow(window)
+        }
+        registerSoftInputHelper(window!!)
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        unregisterSoftInputHelper()
+    }
+
+    private fun registerSoftInputHelper(dialogWindow: Window) {
+        if (!dialogConfig.softInputAdaptive || dialogConfig.dragViewId != 0 || dialogConfig.isAttachedToAnchor) {
+            // 可拖拽和定位锚点的情况就暂时不去适配输入法了
+            return
+        }
+        if (softInputHelper == null) {
+            softInputHelper = SoftInputHelper(requireActivity(), dialogWindow, dialogConfig.attachSoftInputByWindowBottom)
+        }
+    }
+
+    private fun unregisterSoftInputHelper() {
+        softInputHelper?.apply {
+            detach()
+            softInputHelper = null
         }
     }
 
@@ -134,21 +171,22 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
         val navBarHeight = dialogConfig.navBarHeight
 
         // 横屏时xy坐标是反过来的，原本的左右变为上下了，所以得处理一下
-        val anchorRect = if (isLandscape) {
-            Rect(
-                anchorLocation[0] - statusBarHeight, // 关键：转换为窗口坐标系
-                anchorLocation[1],
-                anchorLocation[0] + anchorView!!.width - statusBarHeight,
-                anchorLocation[1] + anchorView!!.height,
-            )
-        } else {
-            Rect(
-                anchorLocation[0],
-                anchorLocation[1] - statusBarHeight, // 关键：转换为窗口坐标系
-                anchorLocation[0] + anchorView!!.width,
-                anchorLocation[1] + anchorView!!.height - statusBarHeight,
-            )
-        }
+        val anchorRect =
+            if (isLandscape) {
+                Rect(
+                    anchorLocation[0] - statusBarHeight, // 关键：转换为窗口坐标系
+                    anchorLocation[1],
+                    anchorLocation[0] + anchorView!!.width - statusBarHeight,
+                    anchorLocation[1] + anchorView!!.height,
+                )
+            } else {
+                Rect(
+                    anchorLocation[0],
+                    anchorLocation[1] - statusBarHeight, // 关键：转换为窗口坐标系
+                    anchorLocation[0] + anchorView!!.width,
+                    anchorLocation[1] + anchorView!!.height - statusBarHeight,
+                )
+            }
 
         // 如果getLocationOnScreen有不准确的地方或者需要再滚动中获取的话，
         // 考虑getGlobalVisibleRect 自动包含所有变换和滚动偏移,看看是否需要吧，再说
@@ -185,8 +223,10 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
      */
     private fun calculateDialogCoordinates(
         anchorRect: Rect,
-        dialogWidth: Int, dialogHeight: Int,
-        statusBarHeight: Int, navBarHeight: Int,
+        dialogWidth: Int,
+        dialogHeight: Int,
+        statusBarHeight: Int,
+        navBarHeight: Int,
     ): Point {
         val result = Point()
         // 屏幕宽高
@@ -209,7 +249,6 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
                 //  if (result.y < statusBarHeight) {
                 //      result.y = Math.max(0, anchorRect.bottom + dialogConfig.offsetY)
                 //  }
-
             }
 
             AnchorGravity.CENTER_VERTICAL -> {
@@ -223,7 +262,6 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
                 //  if (result.y + dialogHeight > screenHeight) {
                 //      result.y = Math.max(0, anchorRect.top - anchorRect.height() + dialogConfig.offsetY - dialogHeight)
                 //  }
-
             }
         }
 
@@ -281,25 +319,21 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
                 // 有拖拽view,则必须如此这句
                 params.gravity = Gravity.TOP or Gravity.START
 
-                params.x = if (dialogConfig.offsetX == 0) {
-                    (screenWidth - dialogWidth) / 2
-                } else dialogConfig.offsetX
+                params.x =
+                    if (dialogConfig.offsetX == 0) {
+                        (screenWidth - dialogWidth) / 2
+                    } else {
+                        dialogConfig.offsetX
+                    }
 
-                params.y = if (dialogConfig.offsetY == 0) {
-                    (screenHeight - dialogHeight) / 2
-                } else dialogConfig.offsetY
-
+                params.y =
+                    if (dialogConfig.offsetY == 0) {
+                        (screenHeight - dialogHeight) / 2
+                    } else {
+                        dialogConfig.offsetY
+                    }
             } else {
                 params.gravity = dialogConfig.defaultGravity
-
-                // 偏移
-                if (dialogConfig.offsetY != 0) {
-                    params.y = params.y + dialogConfig.offsetY
-                }
-
-                if (dialogConfig.offsetX != 0) {
-                    params.x = params.x + dialogConfig.offsetX
-                }
             }
             setWidthAndHeightAndOther(params, dialogWidth, dialogHeight)
             window.attributes = params
@@ -309,8 +343,8 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
     /**
      * 通过测量的宽度传入获取更准确真实的宽度，避免有些测量不准确
      */
-    private fun getRealDialogWidth(dialogWidth: Int): Int {
-        return if (dialogConfig.fixWidth != ViewGroup.LayoutParams.WRAP_CONTENT) {
+    private fun getRealDialogWidth(dialogWidth: Int): Int =
+        if (dialogConfig.fixWidth != ViewGroup.LayoutParams.WRAP_CONTENT) {
             dialogConfig.fixWidth
         } else {
             // dialogWidth合理，一般也是warp，宽度这里合理
@@ -320,13 +354,12 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
                 dialogConfig.minWidth
             }
         }
-    }
 
     /**
      * 通过测量的高度传入获取更准确真实的高度，避免有些测量不准确
      */
-    private fun getRealDialogHeight(dialogHeight: Int): Int {
-        return if (dialogConfig.fixHeight != ViewGroup.LayoutParams.WRAP_CONTENT) {
+    private fun getRealDialogHeight(dialogHeight: Int): Int =
+        if (dialogConfig.fixHeight != ViewGroup.LayoutParams.WRAP_CONTENT) {
             dialogConfig.fixHeight
         } else {
             if (dialogHeight > dialogConfig.minHeight) {
@@ -336,7 +369,6 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
                 dialogConfig.minHeight
             }
         }
-    }
 
     /**
      * 设置宽高 和一些其他共同配置
@@ -344,7 +376,11 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
      * dialogRealWidth:真是宽度
      * dialogRealHeight：真实高度，外部都确定好了
      */
-    private fun setWidthAndHeightAndOther(params: WindowManager.LayoutParams, dialogRealWidth: Int, dialogRealHeight: Int) {
+    private fun setWidthAndHeightAndOther(
+        params: WindowManager.LayoutParams,
+        dialogRealWidth: Int,
+        dialogRealHeight: Int,
+    ) {
         // 宽高需要重新处理，不然就是默认warp的,因为VB的缘故
         params.width = dialogRealWidth
         params.height = dialogRealHeight
@@ -361,7 +397,6 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
 
         // 是否可以点击外部取消
         requireDialog().setCancelable(dialogConfig.isCancelable)
-
     }
 
     /**
@@ -421,7 +456,9 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
                         true
                     }
 
-                    else -> false
+                    else -> {
+                        false
+                    }
                 }
             }
         }
@@ -457,8 +494,10 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
     /**
      * 抽象方法，子类必须实现
      */
-    protected abstract fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): VB
+    protected abstract fun getViewBinding(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+    ): VB
 
     protected abstract fun initView(binding: VB)
-
 }
