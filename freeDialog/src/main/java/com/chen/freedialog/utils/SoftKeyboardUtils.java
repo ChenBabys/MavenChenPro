@@ -13,7 +13,7 @@ import android.view.inputmethod.InputMethodManager;
  * 键盘工具
  */
 public class SoftKeyboardUtils {
- 
+
     /**
      * 隐藏或显示软键盘
      * 如果现在是显示调用后则隐藏 反之则显示
@@ -23,7 +23,7 @@ public class SoftKeyboardUtils {
         InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.toggleSoftInput(0, InputMethodManager.HIDE_NOT_ALWAYS);
     }
- 
+
     /**
      * 强制显示软键盘
      * @param activity
@@ -32,7 +32,7 @@ public class SoftKeyboardUtils {
         InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.showSoftInput(activity.getWindow().getDecorView(),InputMethodManager.SHOW_FORCED);
     }
- 
+
     /**
      * 强制隐藏软键盘
      * @param activity
@@ -63,7 +63,7 @@ public class SoftKeyboardUtils {
      * @param activity
      * @return
      */
- 
+
     public static boolean isSoftShowing(Activity activity) {
         //获取当屏幕内容的高度
         int screenHeight = activity.getWindow().getDecorView().getHeight();

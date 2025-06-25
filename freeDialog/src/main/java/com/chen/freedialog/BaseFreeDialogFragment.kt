@@ -5,15 +5,17 @@ import android.graphics.Color
 import android.graphics.Point
 import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
+import android.os.Build
 import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
-import android.view.View.MeasureSpec
 import android.view.ViewGroup
 import android.view.Window
-import android.view.WindowManager
+import android.view.WindowManager.LayoutParams
+import android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+import androidx.annotation.RequiresApi
 import androidx.fragment.app.DialogFragment
 import androidx.viewbinding.ViewBinding
 import com.chen.freedialog.config.AnchorGravity
@@ -48,6 +50,14 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
     private var dragView: View? = null
 
     private var softInputHelper: SoftInputHelper? = null
+
+    private val windowFlagCompat by lazy {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            WindowFlagCompat.Api30Impl()
+        } else {
+            WindowFlagCompat.BeforeApi30Impl()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -91,12 +101,30 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
             window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             window.setDimAmount(dialogConfig.dimAmount)
             // 沉浸式状态栏（API 21+）,加上，避免dialogFragment被其他dialogFragment覆盖时，状态栏冒出来
-            window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
-            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-            // 将窗口设置为不针对显示的输入法进行调整。窗口的尺寸不会改变,并且不会移动以显示其焦点。
-            if (dialogConfig.softInputAdaptive) {
-                window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
+            // window.setFlags(LayoutParams.FLAG_FULLSCREEN, LayoutParams.FLAG_FULLSCREEN)
+            // View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN 允许内容延伸到状态栏后面
+            // View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY 当用户交互后，状态栏会自动隐藏
+//            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+//            window.decorView.fitsSystemWindows = false
+//            (window.decorView as ViewGroup).getChildAt(0)?.fitsSystemWindows = false
+
+//            WindowInsetsControllerCompat(window, window.decorView).apply {
+//                hide(WindowInsetsCompat.Type.systemBars())
+//            }
+
+//            if (dialogConfig.softInputAdaptive) {
+//                // 将窗口设置为不针对显示的输入法进行调整。窗口的尺寸不会改变,并且不会移动以显示其焦点。
+//                window.setSoftInputMode(LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
+//            }
+
+//            ScreenUtil.getCutoutGravity(requireActivity().window)
+
+            if (ScreenUtil.isStatusBarHidden(requireActivity().window.decorView)) {
+                // 全屏，隐藏状态栏和导航栏
+                window.setFlags(LayoutParams.FLAG_FULLSCREEN, LayoutParams.FLAG_FULLSCREEN)
             }
+
+            windowFlagCompat.setupFlag(window.attributes, dialogConfig)
             // 动画
             setAnimation(window)
             // 拖拽事件
@@ -108,29 +136,6 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
         } else {
             // 否则使用默认的Dialog布局参数
             setupDefaultDialogWindow(window)
-        }
-        registerSoftInputHelper(window!!)
-    }
-
-    override fun onDetach() {
-        super.onDetach()
-        unregisterSoftInputHelper()
-    }
-
-    private fun registerSoftInputHelper(dialogWindow: Window) {
-        if (!dialogConfig.softInputAdaptive || dialogConfig.dragViewId != 0 || dialogConfig.isAttachedToAnchor) {
-            // 可拖拽和定位锚点的情况就暂时不去适配输入法了
-            return
-        }
-        if (softInputHelper == null) {
-            softInputHelper = SoftInputHelper(requireActivity(), dialogWindow, dialogConfig.attachSoftInputByWindowBottom)
-        }
-    }
-
-    private fun unregisterSoftInputHelper() {
-        softInputHelper?.apply {
-            detach()
-            softInputHelper = null
         }
     }
 
@@ -164,29 +169,17 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
         dialogConfig.location[0] = anchorLocation[0]
         dialogConfig.location[1] = anchorLocation[1]
 
-        // 横屏
-        val isLandscape = ScreenUtil.isLandscape(resources)
-
-        val statusBarHeight = dialogConfig.statusHeight
+        val statusBarHeight = if (ScreenUtil.isStatusBarHidden(requireActivity().window.decorView)) 0 else dialogConfig.statusHeight
         val navBarHeight = dialogConfig.navBarHeight
 
         // 横屏时xy坐标是反过来的，原本的左右变为上下了，所以得处理一下
         val anchorRect =
-            if (isLandscape) {
-                Rect(
-                    anchorLocation[0] - statusBarHeight, // 关键：转换为窗口坐标系
-                    anchorLocation[1],
-                    anchorLocation[0] + anchorView!!.width - statusBarHeight,
-                    anchorLocation[1] + anchorView!!.height,
-                )
-            } else {
-                Rect(
-                    anchorLocation[0],
-                    anchorLocation[1] - statusBarHeight, // 关键：转换为窗口坐标系
-                    anchorLocation[0] + anchorView!!.width,
-                    anchorLocation[1] + anchorView!!.height - statusBarHeight,
-                )
-            }
+            Rect(
+                anchorLocation[0], // 关键：转换为窗口坐标系
+                anchorLocation[1] - statusBarHeight,
+                anchorLocation[0] + anchorView!!.width,
+                anchorLocation[1] + anchorView!!.height - statusBarHeight,
+            )
 
         // 如果getLocationOnScreen有不准确的地方或者需要再滚动中获取的话，
         // 考虑getGlobalVisibleRect 自动包含所有变换和滚动偏移,看看是否需要吧，再说
@@ -377,19 +370,24 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
      * dialogRealHeight：真实高度，外部都确定好了
      */
     private fun setWidthAndHeightAndOther(
-        params: WindowManager.LayoutParams,
+        params: LayoutParams,
         dialogRealWidth: Int,
         dialogRealHeight: Int,
     ) {
+        if (params.width != ViewGroup.LayoutParams.MATCH_PARENT && params.height != ViewGroup.LayoutParams.MATCH_PARENT) {
+            // 只要不是宽高都铺满，就设置将window放置在整个屏幕，忽略父窗口的任何约束
+            dialog?.window?.addFlags(FLAG_LAYOUT_NO_LIMITS)
+        }
+
         // 宽高需要重新处理，不然就是默认warp的,因为VB的缘故
         params.width = dialogRealWidth
         params.height = dialogRealHeight
 
         // 是否拦截外部触摸事件
         if (dialogConfig.isInterceptOutSideEvent) {
-            params.flags = params.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL.inv() // 拦截外部事件
+            params.flags = params.flags and LayoutParams.FLAG_NOT_TOUCH_MODAL.inv() // 拦截外部事件
         } else {
-            params.flags = params.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL // 不拦截外部事件
+            params.flags = params.flags or LayoutParams.FLAG_NOT_TOUCH_MODAL // 不拦截外部事件
         }
 
         // 附加多一个判断
@@ -414,9 +412,7 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
             // 屏幕宽高
             val screenWidth = resources.displayMetrics.widthPixels
             val screenHeight = resources.displayMetrics.heightPixels
-
-            val dialogWidth = window.decorView.measuredWidth
-            val dialogHeight = window.decorView.measuredHeight
+            val statusBarHeight = if (ScreenUtil.isStatusBarHidden(requireActivity().window.decorView)) 0 else dialogConfig.statusHeight
 
             var initialX = 0
             var initialY = 0
@@ -443,14 +439,14 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
                         val x = initialX + (event.rawX - initialTouchX).toInt()
                         val y = initialY + (event.rawY - initialTouchY).toInt()
 
+                        val dialogWidth = window.decorView.measuredWidth
+                        val dialogHeight = window.decorView.measuredHeight
+
                         // 更新到窗口,有了dragViewId，上面已经处理了 params.gravity了，这里不用处理了
                         val params = window.attributes
-                        params.x = x
-                        params.y = y
-
                         // 最终边界修正（考虑安全区域）
                         params.x = x.coerceIn(0, screenWidth - dialogWidth)
-                        params.y = y.coerceIn(dialogConfig.statusHeight, screenHeight - dialogHeight)
+                        params.y = y.coerceIn(0, screenHeight - dialogHeight - statusBarHeight)
 
                         window.attributes = params
                         true
@@ -500,4 +496,61 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
     ): VB
 
     protected abstract fun initView(binding: VB)
+
+    /**
+     * Window flag compat
+     *
+     * 刘海屏
+     * - 设备模式设置
+     * - 边角刘海屏
+     * - 双刘海屏
+     * - 打孔屏
+     * - 长型刘海屏
+     * - 瀑布刘海屏
+     * - 隐藏
+     * - 在刘海区域下方呈现应用
+     *
+     * Android 9.0系统中提供了3种layoutInDisplayCutoutMode属性来允许应用自主决定该如何对刘海屏设备进行适配。
+     * LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
+     * 这是一种默认的属性，在不进行明确指定的情况下，系统会自动使用这种属性。这种属性允许应用程序的内容在竖屏模式下自动延伸到刘海区域，而在横屏模式下则不会延伸到刘海区域。
+     * LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+     * 这种属性表示，不管手机处于横屏还是竖屏模式，都会允许应用程序的内容延伸到刘海区域。
+     * LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER
+     * 这种属性表示，永远不允许应用程序的内容延伸到刘海区域。
+     * LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS （Android 11,Api 30增加）
+     * 允许应用内容始终延伸至凹口区域，实现真正的“边到边”显示效果
+     */
+    interface WindowFlagCompat {
+        fun setupFlag(
+            params: ViewGroup.LayoutParams,
+            dialogConfig: DialogConfigs,
+        )
+
+        class BeforeApi30Impl : WindowFlagCompat {
+            override fun setupFlag(
+                params: ViewGroup.LayoutParams,
+                dialogConfig: DialogConfigs,
+            ) {
+                if (params is LayoutParams) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        // 允许占用刘海
+                        params.layoutInDisplayCutoutMode = LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                    }
+                }
+            }
+        }
+
+        class Api30Impl : WindowFlagCompat {
+            @RequiresApi(Build.VERSION_CODES.R)
+            override fun setupFlag(
+                params: ViewGroup.LayoutParams,
+                dialogConfig: DialogConfigs,
+            ) {
+                if (params is LayoutParams) {
+                    // 允许占用刘海
+                    params.layoutInDisplayCutoutMode = LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+                }
+            }
+        }
+    }
 }

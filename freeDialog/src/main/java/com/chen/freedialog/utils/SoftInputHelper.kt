@@ -16,6 +16,7 @@ import android.view.animation.AccelerateDecelerateInterpolator
  * @property dialogWindow
  * @property attachByWindowBottom 是否直接将整个[dialogWindow]的底部对齐输入法顶部
  */
+@Deprecated("由于刘海屏、系统栏等存在，此方式兼容性不太好，暂时用Dialog原生的方式去适配输入法")
 class SoftInputHelper(val activity: Activity, private val dialogWindow: Window, private val attachByWindowBottom: Boolean) :
     ViewTreeObserver.OnGlobalLayoutListener,
     ViewTreeObserver.OnGlobalFocusChangeListener {
@@ -102,6 +103,10 @@ class SoftInputHelper(val activity: Activity, private val dialogWindow: Window, 
      * @return
      */
     private fun calcKeyboardHeight(): Int {
+        if (initDialogWindowTopY == 0) {
+            dialogWindow.decorView.getLocationOnScreen(windowInScreenLocation)
+            initDialogWindowTopY = windowInScreenLocation[1]
+        }
         val rect = getWindowVisibleDisplayFrame()
         val usableHeightNow = rect.height()
         val usableHeightSansKeyboard: Int = activityDecorView!!.height
@@ -139,11 +144,6 @@ class SoftInputHelper(val activity: Activity, private val dialogWindow: Window, 
         if (isOpened()) {
             val windowBottomY: Int
 
-            if (initDialogWindowTopY == 0) {
-                dialogWindow.decorView.getLocationOnScreen(windowInScreenLocation)
-                initDialogWindowTopY = windowInScreenLocation[1]
-            }
-
             val focusView = dialogWindow.decorView.findFocus()
             if (focusView != null && !attachByWindowBottom) {
                 focusView.getLocationInWindow(viewInWindowLocation)
@@ -153,15 +153,25 @@ class SoftInputHelper(val activity: Activity, private val dialogWindow: Window, 
                 // 对齐Dialog底部
                 windowBottomY = initDialogWindowTopY + dialogWindow.decorView.measuredHeight
             }
-            // 键盘顶部在屏幕的Y坐标
-            val keyBoardTopY =
-                activityDecorView!!.height - keyBoardHeight + if (ScreenUtil.isStatusBarHidden(activityDecorView!!)) 0 else ScreenUtil.getStatusHeight(activity.resources)
-            Logger.log("initDialogWindowY:${initDialogWindowTopY}, windowBottomY:${windowBottomY}, keyBoardTopY:${keyBoardTopY}")
-            if (windowBottomY > keyBoardTopY) { // 当对齐点在键盘顶部的下方，才需要去移动dialogWindow
-                animateWindowYPosition(dialogWindow, initDialogWindowTopY - (windowBottomY - keyBoardTopY))
+            // 键盘顶部在屏幕的Y坐标（这里Activity可能是包含或不包含systemBar、延伸或未延伸到DisplayCutout）
+            val keyBoardTopY = activity.resources.displayMetrics.heightPixels - keyBoardHeight
+            // activityDecorView!!.height - keyBoardHeight + if (ScreenUtil.isStatusBarHidden(activityDecorView!!)) 0 else ScreenUtil.getStatusHeight(activity.resources)
+//            Logger.log("initDialogWindowY:${initDialogWindowTopY}, windowBottomY:${windowBottomY}, keyBoardTopY:${keyBoardTopY}")
+            Logger.log(
+                "键盘高度: $keyBoardHeight, 屏幕高度: ${activity.resources.displayMetrics.heightPixels}，activty高度:${activityDecorView!!.height}," +
+                        "dialogWindow高度：${dialogWindow.decorView.height}," +
+                        " windowInScreenLocation:${
+                            windowInScreenLocation.joinToString(
+                                ",",
+                            )
+                        } ",
+            )
+            if (windowBottomY > keyBoardTopY) { // 当弹窗底部在键盘顶部的下方，才需要去移动dialogWindow
+
+//                animateWindowYPosition(dialogWindow, initDialogWindowTopY) // - (windowBottomY - keyBoardTopY))
             }
         } else {
-            animateWindowYPosition(dialogWindow, windowInScreenLocation[1])
+//            animateWindowYPosition(dialogWindow, windowInScreenLocation[1])
         }
     }
 
@@ -174,8 +184,9 @@ class SoftInputHelper(val activity: Activity, private val dialogWindow: Window, 
         val params = window.attributes
 
         if (params.gravity == initGravity) {
-            // 第一次的时候，改成以左上角
+            // 第一次的时候，锚点改成以左上角
             params.gravity = Gravity.TOP or Gravity.START
+            // WindowManager.LayoutParams的x和y都是根据锚点去做偏移。比如gravity是Gravity.Bottom，y=-100，表示从底部上移100px
             params.x = windowInScreenLocation[0]
             params.y = windowInScreenLocation[1]
             window.attributes = params
@@ -183,6 +194,9 @@ class SoftInputHelper(val activity: Activity, private val dialogWindow: Window, 
 
         // 保存当前的y值
         val startY = params.y
+        if (startY == targetY) {
+            return
+        }
 
         windowYPositionAnimator?.cancel()
         // 创建值动画
