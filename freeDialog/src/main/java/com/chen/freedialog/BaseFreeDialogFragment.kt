@@ -12,9 +12,11 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.view.Window
 import android.view.WindowManager.LayoutParams
 import android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+import android.widget.PopupWindow
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.DialogFragment
 import androidx.viewbinding.ViewBinding
@@ -24,7 +26,7 @@ import com.chen.freedialog.utils.ScreenUtil
 import com.chen.freedialog.utils.SoftInputHelper
 
 /**
- * 基类。可以定位到某个View[类似PopupWindow],也可以是正常dialog
+ * 基类。可以定位到某个View类似[PopupWindow],也可以是正常dialog
  * 为什么不用popupWindow和其他自定义dialog呢？是因为他们都只能在activity层面展示，当在DialogFragment内部时，则会被覆盖了，不好用
  */
 abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
@@ -104,21 +106,22 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
             // window.setFlags(LayoutParams.FLAG_FULLSCREEN, LayoutParams.FLAG_FULLSCREEN)
             // View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN 允许内容延伸到状态栏后面
             // View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY 当用户交互后，状态栏会自动隐藏
-//            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-//            window.decorView.fitsSystemWindows = false
-//            (window.decorView as ViewGroup).getChildAt(0)?.fitsSystemWindows = false
+            // window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            // window.decorView.fitsSystemWindows = false
+            // (window.decorView as ViewGroup).getChildAt(0)?.fitsSystemWindows = false
 
-//            WindowInsetsControllerCompat(window, window.decorView).apply {
-//                hide(WindowInsetsCompat.Type.systemBars())
-//            }
+            // WindowInsetsControllerCompat(window, window.decorView).apply {
+            //     hide(WindowInsetsCompat.Type.systemBars())
+            // }
 
-//            if (dialogConfig.softInputAdaptive) {
-//                // 将窗口设置为不针对显示的输入法进行调整。窗口的尺寸不会改变,并且不会移动以显示其焦点。
-//                window.setSoftInputMode(LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
-//            }
+            if (dialogConfig.softInputAdaptive) {
+                // 将窗口设置为不针对显示的输入法进行调整。窗口的尺寸不会改变,并且不会移动以显示其焦点。
+                window.setSoftInputMode(LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
+            }
 
-//            ScreenUtil.getCutoutGravity(requireActivity().window)
+            // ScreenUtil.getCutoutGravity(requireActivity().window)
 
+            // 跟随Activity的window，如果其状态栏是隐藏的，那么我们的window就设置为全屏
             if (ScreenUtil.isStatusBarHidden(requireActivity().window.decorView)) {
                 // 全屏，隐藏状态栏和导航栏
                 window.setFlags(LayoutParams.FLAG_FULLSCREEN, LayoutParams.FLAG_FULLSCREEN)
@@ -181,32 +184,37 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
                 anchorLocation[1] + anchorView!!.height - statusBarHeight,
             )
 
-        // 如果getLocationOnScreen有不准确的地方或者需要再滚动中获取的话，
-        // 考虑getGlobalVisibleRect 自动包含所有变换和滚动偏移,看看是否需要吧，再说
-        // 似乎在dialogFragment包裹着dialogFragment中横屏时不太准确，这个方式
-        // val anchorLocation = Rect().apply {
-        //     anchorView!!.getGlobalVisibleRect(this)
-        //     // 转换为窗口坐标系（扣除状态栏）
-        //     top -= statusBarHeight
-        //     bottom -= statusBarHeight
-        // }
+        // 先让其不可见，等测量到高度再让其可见
+        window.decorView.visibility = View.INVISIBLE
+
+        window.decorView.viewTreeObserver.addOnGlobalLayoutListener(
+            object : ViewTreeObserver.OnGlobalLayoutListener {
+                override fun onGlobalLayout() {
+                    window.decorView.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                    window.decorView.visibility = View.VISIBLE
+                    // 这里获取到真实的宽高，才去计算对话框的位置
+                    val dialogWidth = window.decorView.measuredWidth
+                    val dialogHeight = window.decorView.measuredHeight
+
+                    // 计算对话框位置
+                    val dialogPosition = calculateDialogCoordinates(anchorRect, dialogWidth, dialogHeight, statusBarHeight, navBarHeight)
+
+                    // 设置对话框位置
+                    val params = window.attributes
+                    params.gravity = Gravity.TOP or Gravity.START // 必须
+                    params.x = dialogPosition.x
+                    params.y = dialogPosition.y
+                    window.attributes = params
+                }
+            },
+        )
 
         // 获取对话框的宽高， 一般测量到的都是warp宽度
         window.decorView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
-
-        // 这里一定要是measured的值，否则不准确,测量到的好像都是warp的值,测量不是很准，所以如果外部有固定值，则使用
         val dialogWidth = getRealDialogWidth(window.decorView.measuredWidth)
         val dialogHeight = getRealDialogHeight(window.decorView.measuredHeight)
-
-        // 计算对话框位置
-        val dialogPosition = calculateDialogCoordinates(anchorRect, dialogWidth, dialogHeight, statusBarHeight, navBarHeight)
-
-        // 设置对话框位置
+        // 设置对话框宽高及其他
         val params = window.attributes
-        params.gravity = Gravity.TOP or Gravity.START // 必须
-        params.x = dialogPosition.x
-        params.y = dialogPosition.y
-
         setWidthAndHeightAndOther(params, dialogWidth, dialogHeight)
         window.attributes = params
     }
@@ -284,7 +292,7 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
 
         // 最终边界修正（考虑安全区域）
         result.x = result.x.coerceIn(0, screenWidth - dialogWidth)
-        result.y = result.y.coerceIn(statusBarHeight, screenHeight - dialogHeight)
+        result.y = result.y.coerceIn(0, screenHeight - dialogHeight - statusBarHeight)
 
         return result
     }
@@ -305,9 +313,7 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
             // 一般测量到的都是warp宽度
             val dialogWidth = getRealDialogWidth(window.decorView.measuredWidth)
             val dialogHeight = getRealDialogHeight(window.decorView.measuredHeight)
-            /**
-             * 如果有拖拽的viewId，则特殊处理,通过计算来居中，初始为中间，有预置的值就用预置的，无则计算居中
-             */
+            // 如果有拖拽的viewId，则特殊处理,通过计算来居中，初始为中间，有预置的值就用预置的，无则计算居中
             if (dialogConfig.dragViewId != 0) {
                 // 有拖拽view,则必须如此这句
                 params.gravity = Gravity.TOP or Gravity.START
@@ -501,7 +507,7 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
      * Window flag compat
      *
      * 刘海屏
-     * - 设备模式设置
+     * - 设备默认设置
      * - 边角刘海屏
      * - 双刘海屏
      * - 打孔屏
