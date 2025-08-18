@@ -147,14 +147,9 @@ class DialogConfigs : Parcelable {
     var showAnimation: Int = DialogAnim.DialogDefault
 
     /**
-     * 使window的底部对齐输入法的顶部，否则使window内的焦点视图对齐输入法的顶部
+     * 是否不允许输入法顶起弹框
      */
-    var attachSoftInputByWindowBottom: Boolean = true
-
-    /**
-     * 是否适配输入法
-     */
-    var softInputAdaptive: Boolean = false
+    var softInputAdjustNothing: Boolean = false
 
     constructor()
 
@@ -187,8 +182,7 @@ class DialogConfigs : Parcelable {
         isTouchOutSideCancelable = p.readByte().toInt() != 0
         isInterceptOutSideEvent = p.readByte().toInt() != 0
         showAnimation = p.readInt()
-        attachSoftInputByWindowBottom = p.readByte().toInt() != 0
-        softInputAdaptive = p.readByte().toInt() != 0
+        softInputAdjustNothing = p.readByte().toInt() != 0
     }
 
     override fun describeContents(): Int = 0
@@ -225,8 +219,7 @@ class DialogConfigs : Parcelable {
         dest.writeByte((if (isTouchOutSideCancelable) 1 else 0).toByte())
         dest.writeByte((if (isInterceptOutSideEvent) 1 else 0).toByte())
         dest.writeInt(showAnimation)
-        dest.writeByte((if (attachSoftInputByWindowBottom) 1 else 0).toByte())
-        dest.writeByte((if (softInputAdaptive) 1 else 0).toByte())
+        dest.writeByte((if (softInputAdjustNothing) 1 else 0).toByte())
     }
 
     companion object CREATOR : Creator<DialogConfigs> {

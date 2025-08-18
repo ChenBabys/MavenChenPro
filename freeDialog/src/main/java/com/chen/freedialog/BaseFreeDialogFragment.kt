@@ -61,9 +61,11 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
         }
     }
 
+    open fun getDialogStyle(): Int = R.style.BaseDialogFragment
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setStyle(STYLE_NO_TITLE, R.style.BaseDialogFragment)
+        setStyle(STYLE_NO_TITLE, getDialogStyle())
     }
 
     override fun onCreateView(
@@ -114,12 +116,12 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
             //     hide(WindowInsetsCompat.Type.systemBars())
             // }
 
-            if (dialogConfig.softInputAdaptive) {
+            if (dialogConfig.softInputAdjustNothing) {
                 // 将窗口设置为不针对显示的输入法进行调整。窗口的尺寸不会改变,并且不会移动以显示其焦点。
                 window.setSoftInputMode(LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
             }
 
-            // ScreenUtil.getCutoutGravity(requireActivity().window)
+            //  ScreenUtil.getCutoutGravity(requireActivity().window)
 
             // 跟随Activity的window，如果其状态栏是隐藏的，那么我们的window就设置为全屏
             if (ScreenUtil.isStatusBarHidden(requireActivity().window.decorView)) {
