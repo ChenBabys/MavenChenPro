@@ -30,8 +30,12 @@ class CommonInputValueDialog(private val fragmentManager: FragmentManager) : Bas
 
     override fun initView(binding: DialogCommonInputValueBinding) {
         // 固定宽度
-        dialogConfig.fixWidth = 800
-//        dialogConfig.dragViewId = R.id.tv_title
+        dialogConfig.apply {
+            fixWidth = 800
+            isTouchOutSideCancelable = true
+            softInputAdjustNothing = true
+        }
+        // dialogConfig.dragViewId = R.id.tv_title
         // dialogConfig.offsetY = -200
 
         //默认隐藏描述，除非输入描述

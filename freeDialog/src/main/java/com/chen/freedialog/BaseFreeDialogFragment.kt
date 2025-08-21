@@ -14,6 +14,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.view.Window
+import android.view.WindowManager
 import android.view.WindowManager.LayoutParams
 import android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
 import android.widget.PopupWindow
@@ -51,7 +52,7 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
      */
     private var dragView: View? = null
 
-    private var softInputHelper: SoftInputHelper? = null
+    // private var softInputHelper: SoftInputHelper? = null
 
     private val windowFlagCompat by lazy {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -116,11 +117,6 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
             //     hide(WindowInsetsCompat.Type.systemBars())
             // }
 
-            if (dialogConfig.softInputAdjustNothing) {
-                // 将窗口设置为不针对显示的输入法进行调整。窗口的尺寸不会改变,并且不会移动以显示其焦点。
-                window.setSoftInputMode(LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
-            }
-
             //  ScreenUtil.getCutoutGravity(requireActivity().window)
 
             // 跟随Activity的window，如果其状态栏是隐藏的，那么我们的window就设置为全屏
@@ -178,13 +174,12 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
         val navBarHeight = dialogConfig.navBarHeight
 
         // 横屏时xy坐标是反过来的，原本的左右变为上下了，所以得处理一下
-        val anchorRect =
-            Rect(
-                anchorLocation[0], // 关键：转换为窗口坐标系
-                anchorLocation[1] - statusBarHeight,
-                anchorLocation[0] + anchorView!!.width,
-                anchorLocation[1] + anchorView!!.height - statusBarHeight,
-            )
+        val anchorRect = Rect(
+            anchorLocation[0], // 关键：转换为窗口坐标系
+            anchorLocation[1] - statusBarHeight,
+            anchorLocation[0] + anchorView!!.width,
+            anchorLocation[1] + anchorView!!.height - statusBarHeight,
+        )
 
         // 先让其不可见，等测量到高度再让其可见
         window.decorView.visibility = View.INVISIBLE
@@ -376,6 +371,7 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
      * 如果没有设置固定宽度时，而设置了最小宽度，当弹框实际warp内容大于就是变为warp，同理高度一样
      * dialogRealWidth:真是宽度
      * dialogRealHeight：真实高度，外部都确定好了
+     * 总结一下，浮动需要wrap宽高，非浮动需要match宽高，并且会受到主题中windowIsFloating属性的影响
      */
     private fun setWidthAndHeightAndOther(
         params: LayoutParams,
@@ -396,6 +392,16 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
             params.flags = params.flags and LayoutParams.FLAG_NOT_TOUCH_MODAL.inv() // 拦截外部事件
         } else {
             params.flags = params.flags or LayoutParams.FLAG_NOT_TOUCH_MODAL // 不拦截外部事件
+        }
+
+        // 将窗口设置为不针对显示的输入法进行调整。窗口的尺寸不会改变,并且不会移动以显示其焦点。
+        // 设置这个属性之后，还得确保主题那边的windowIsFloating和windowIsTranslucent（可选）都设置为false才可生效
+        if (dialogConfig.softInputAdjustNothing) {
+            params.softInputMode = LayoutParams.SOFT_INPUT_ADJUST_NOTHING
+            // 确保内容可以延伸到状态栏后面
+            params.flags = params.flags or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+            // 强制窗口使用整个屏幕区域进行布局,这一句是关键，可以达到windowIsFloating = false的效果
+            params.flags = params.flags or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
         }
 
         // 附加多一个判断
