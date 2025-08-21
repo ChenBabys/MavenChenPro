@@ -183,7 +183,17 @@ class DialogConfigs : Parcelable {
     /**
      * 滑动关闭动画时长（注意和默认的动画无关系，只专注于swipe）
      */
-    var swipeDismissAnimDuration: Long  = 250L
+    var swipeDismissAnimDuration: Long = 250L
+
+    /**
+     * swipe指定viewId。如果不指定，则是整个页面的view
+     */
+    var swipeDismissViewId: Int = 0
+
+    /**
+     * swipe关闭期间，是否允许改变透明度
+     */
+    var swipeDismissChangeAlpha: Boolean = true
 
     constructor()
 
@@ -222,6 +232,8 @@ class DialogConfigs : Parcelable {
         swipeThreshold = p.readFloat()
         swipeVelocityThreshold = p.readFloat()
         swipeDismissAnimDuration = p.readLong()
+        swipeDismissViewId = p.readInt()
+        swipeDismissChangeAlpha = p.readByte().toInt() != 0
     }
 
     override fun describeContents(): Int = 0
@@ -264,6 +276,8 @@ class DialogConfigs : Parcelable {
         dest.writeFloat(swipeThreshold)
         dest.writeFloat(swipeVelocityThreshold)
         dest.writeLong(swipeDismissAnimDuration)
+        dest.writeInt(swipeDismissViewId)
+        dest.writeByte((if (swipeDismissChangeAlpha) 1 else 0).toByte())
     }
 
     companion object CREATOR : Creator<DialogConfigs> {

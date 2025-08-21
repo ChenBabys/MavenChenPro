@@ -40,7 +40,7 @@ class CommonBigDialog(private val fragmentManager: FragmentManager) : BaseFreeDi
 
             // 关于这个drag功能，是有效的，但这个MavenChenPro项目有问题，实际用到其他项目是可行的，不用理
             // dialogConfig.dragViewId = R.id.tv_confirm
-            dialogConfig.dragViewId = binding.tvConfirm.id
+            // dialogConfig.dragViewId = binding.tvConfirm.id
 
             // 手势滑动关闭
             swipeToDismissEnabled = true
@@ -48,6 +48,9 @@ class CommonBigDialog(private val fragmentManager: FragmentManager) : BaseFreeDi
             swipeThreshold = 0.25f
             swipeVelocityThreshold = 800f
             swipeDismissAnimDuration = 300
+
+            // 设置则以它为准swipe,不设置则是整个页面View
+            swipeDismissViewId = binding.tvConfirm.id
         }
 
 

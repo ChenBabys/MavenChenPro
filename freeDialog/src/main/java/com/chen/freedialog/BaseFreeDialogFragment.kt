@@ -511,7 +511,7 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
         var dragPercent = 0f
 
         /**
-         * 更新视图位置
+         * 更新整个页面视图位置
          */
         fun updateViewPosition(percent: Float) {
             view?.let {
@@ -528,7 +528,9 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
                 }
 
                 // 添加透明度变化效果
-                it.alpha = 1f - (percent * 0.5f)
+                if (dialogConfig.swipeDismissChangeAlpha) {
+                    it.alpha = 1f - (percent * 0.5f)
+                }
             }
         }
 
@@ -663,9 +665,13 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
         }
 
         /**
-         * 正式处理监听swipe事件
+         * 正式处理监听swipe事件，若外部传入指定VIew,则用，否则就是整个页面都作用
          */
-        view?.setOnTouchListener { v, event ->
+        val swipeView: View? = if (dialogConfig.swipeDismissViewId != 0) {
+            view?.findViewById(dialogConfig.swipeDismissViewId)
+        } else view
+
+        swipeView?.setOnTouchListener { v, event ->
             if (swipeDismissAnimator != null && swipeDismissAnimator!!.isRunning) {
                 // 动画正在进行中，不处理触摸事件
                 return@setOnTouchListener true
