@@ -36,6 +36,8 @@ class CommonInputValueDialog(private val fragmentManager: FragmentManager) : Bas
             isTouchOutSideCancelable = true
             softInputAdjustNothing = true
         }
+
+        // 关于这个drag功能，是有效的，但这个MavenChenPro项目有问题，实际用到其他项目是可行的，不用理
          dialogConfig.dragViewId = R.id.tv_confirm
 
         //默认隐藏描述，除非输入描述
