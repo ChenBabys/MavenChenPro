@@ -1,5 +1,8 @@
 package com.chen.freedialog
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.graphics.Color
 import android.graphics.Point
@@ -17,14 +20,16 @@ import android.view.Window
 import android.view.WindowManager
 import android.view.WindowManager.LayoutParams
 import android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+import android.view.animation.AccelerateInterpolator
+import android.view.animation.DecelerateInterpolator
 import android.widget.PopupWindow
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.DialogFragment
 import androidx.viewbinding.ViewBinding
 import com.chen.freedialog.config.AnchorGravity
 import com.chen.freedialog.config.DialogAnim
+import com.chen.freedialog.config.SwipeDirection
 import com.chen.freedialog.utils.ScreenUtil
-import com.chen.freedialog.utils.SoftInputHelper
 
 /**
  * 基类。可以定位到某个View类似[PopupWindow],也可以是正常dialog
@@ -53,6 +58,11 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
     private var dragView: View? = null
 
     // private var softInputHelper: SoftInputHelper? = null
+
+    /**
+     * 滑动关闭动画
+     */
+    private var swipeDismissAnimator: ValueAnimator? = null
 
     private val windowFlagCompat by lazy {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -88,6 +98,8 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        swipeDismissAnimator?.cancel()
+        swipeDismissAnimator = null
         vBinding = null
     }
 
@@ -130,9 +142,13 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
             setAnimation(window)
             // 拖拽事件
             setDragTouchEvent(window)
+            // 手势滑动关闭
+            setSwipeToDismiss(window)
         }
-        // 如果需要定位到某个View
-        if (dialogConfig.isAttachedToAnchor && anchorView != null) {
+
+        // 如果需要定位到某个View(这是固定的)
+        val isNeedAttachedToAnchor = dialogConfig.isAttachedToAnchor && anchorView != null
+        if (isNeedAttachedToAnchor) {
             positionDialogRelativeToAnchor(window)
         } else {
             // 否则使用默认的Dialog布局参数
@@ -307,30 +323,31 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
             val params = window.attributes
             // 获取对话框的宽高
             window.decorView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+
             // 一般测量到的都是warp宽度
             val dialogWidth = getRealDialogWidth(window.decorView.measuredWidth)
             val dialogHeight = getRealDialogHeight(window.decorView.measuredHeight)
+
             // 如果有拖拽的viewId，则特殊处理,通过计算来居中，初始为中间，有预置的值就用预置的，无则计算居中
             if (dialogConfig.dragViewId != 0) {
                 // 有拖拽view,则必须如此这句
                 params.gravity = Gravity.TOP or Gravity.START
 
-                params.x =
-                    if (dialogConfig.offsetX == 0) {
-                        (screenWidth - dialogWidth) / 2
-                    } else {
-                        dialogConfig.offsetX
-                    }
+                params.x = if (dialogConfig.offsetX == 0) {
+                    (screenWidth - dialogWidth) / 2
+                } else {
+                    dialogConfig.offsetX
+                }
 
-                params.y =
-                    if (dialogConfig.offsetY == 0) {
-                        (screenHeight - dialogHeight) / 2
-                    } else {
-                        dialogConfig.offsetY
-                    }
+                params.y = if (dialogConfig.offsetY == 0) {
+                    (screenHeight - dialogHeight) / 2
+                } else {
+                    dialogConfig.offsetY
+                }
             } else {
                 params.gravity = dialogConfig.defaultGravity
             }
+
             setWidthAndHeightAndOther(params, dialogWidth, dialogHeight)
             window.attributes = params
         }
@@ -378,11 +395,6 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
         dialogRealWidth: Int,
         dialogRealHeight: Int,
     ) {
-        if (params.width != ViewGroup.LayoutParams.MATCH_PARENT && params.height != ViewGroup.LayoutParams.MATCH_PARENT) {
-            // 只要不是宽高都铺满，就设置将window放置在整个屏幕，忽略父窗口的任何约束
-            dialog?.window?.addFlags(FLAG_LAYOUT_NO_LIMITS)
-        }
-
         // 宽高需要重新处理，不然就是默认warp的,因为VB的缘故
         params.width = dialogRealWidth
         params.height = dialogRealHeight
@@ -402,6 +414,11 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
             params.flags = params.flags or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
             // 强制窗口使用整个屏幕区域进行布局,这一句是关键，可以达到windowIsFloating = false的效果
             params.flags = params.flags or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+        }
+
+        if (params.width != ViewGroup.LayoutParams.MATCH_PARENT && params.height != ViewGroup.LayoutParams.MATCH_PARENT) {
+            // 只要不是宽高都铺满，就设置将window放置在整个屏幕，忽略父窗口的任何约束
+            dialog?.window?.addFlags(FLAG_LAYOUT_NO_LIMITS)
         }
 
         // 附加多一个判断
@@ -473,6 +490,220 @@ abstract class BaseFreeDialogFragment<VB : ViewBinding?> : DialogFragment() {
             }
         }
     }
+
+    /**
+     * 设置滑动关闭弹框
+     * 注意：setOnTouchListener 是替换操作，不是添加操作，注意别被覆盖了
+     * 若dragViewId不空，则取消这个swipe事件，以drag偏业务类型的功能优先
+     */
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setSwipeToDismiss(window: Window) {
+        if (!dialogConfig.swipeToDismissEnabled || dialogConfig.dragViewId != 0) {
+            return
+        }
+
+        /**
+         * 手势滑动相关字段
+         */
+        var initialTouchY = 0f
+        var initialTouchX = 0f
+        var isDragging = false
+        var dragPercent = 0f
+
+        /**
+         * 更新视图位置
+         */
+        fun updateViewPosition(percent: Float) {
+            view?.let {
+                when (dialogConfig.swipeDirection) {
+                    SwipeDirection.SWIPE_DIRECTION_DOWN -> it.translationY = percent * it.height
+                    SwipeDirection.SWIPE_DIRECTION_UP -> it.translationY = -percent * it.height
+                    SwipeDirection.SWIPE_DIRECTION_LEFT -> it.translationX = -percent * it.width
+                    SwipeDirection.SWIPE_DIRECTION_RIGHT -> it.translationX = percent * it.width
+                    else -> {
+                        // 对于任意方向，同时移动X和Y
+                        it.translationX = 0f
+                        it.translationY = percent * it.height
+                    }
+                }
+
+                // 添加透明度变化效果
+                it.alpha = 1f - (percent * 0.5f)
+            }
+        }
+
+        /**
+         * 处理拖动事件
+         */
+        fun handleDrag(event: MotionEvent) {
+            val deltaY = event.rawY - initialTouchY
+            val deltaX = event.rawX - initialTouchX
+
+            // 根据方向计算拖动百分比
+            dragPercent = when (dialogConfig.swipeDirection) {
+                SwipeDirection.SWIPE_DIRECTION_DOWN -> deltaY / (view?.height ?: 1)
+                SwipeDirection.SWIPE_DIRECTION_UP -> -deltaY / (view?.height ?: 1)
+                SwipeDirection.SWIPE_DIRECTION_LEFT -> -deltaX / (view?.width ?: 1)
+                SwipeDirection.SWIPE_DIRECTION_RIGHT -> deltaX / (view?.width ?: 1)
+                else -> {
+                    // 对于任意方向，使用最大的拖动百分比
+                    Math.max(Math.abs(deltaY) / (view?.height ?: 1), Math.abs(deltaX) / (view?.width ?: 1))
+                }
+            }.coerceIn(0f, 1f)
+
+            // 更新视图位置
+            updateViewPosition(dragPercent)
+        }
+
+        /**
+         * 计算滑动速度
+         */
+        fun calculateVelocity(event: MotionEvent): Float {
+            val deltaTime = event.eventTime - event.downTime
+            if (deltaTime <= 0) return 0f
+
+            val deltaY = event.rawY - initialTouchY
+            val deltaX = event.rawX - initialTouchX
+
+            return when (dialogConfig.swipeDirection) {
+                SwipeDirection.SWIPE_DIRECTION_DOWN,
+                SwipeDirection.SWIPE_DIRECTION_UP -> Math.abs(deltaY / deltaTime) * 1000
+
+                SwipeDirection.SWIPE_DIRECTION_LEFT,
+                SwipeDirection.SWIPE_DIRECTION_RIGHT -> Math.abs(deltaX / deltaTime) * 1000
+
+                else -> Math.max(
+                    Math.abs(deltaY / deltaTime) * 1000,
+                    Math.abs(deltaX / deltaTime) * 1000
+                )
+            }
+        }
+
+        /**
+         * 判断是否应该关闭对话框
+         */
+        fun shouldDismissDialog(velocity: Float): Boolean {
+            // 如果拖动超过阈值，或者速度超过阈值，则关闭
+            return dragPercent > dialogConfig.swipeThreshold ||
+                    velocity > dialogConfig.swipeVelocityThreshold
+        }
+
+        /**
+         * 带动画关闭对话框
+         */
+        fun dismissWithAnimation() {
+            //  val targetPosition = when (dialogConfig.swipeDirection) {
+            //      SwipeDirection.SWIPE_DIRECTION_DOWN -> view?.height?.toFloat() ?: 0f
+            //      SwipeDirection.SWIPE_DIRECTION_UP -> -(view?.height?.toFloat() ?: 0f)
+            //      SwipeDirection.SWIPE_DIRECTION_LEFT -> -(view?.width?.toFloat() ?: 0f)
+            //      SwipeDirection.SWIPE_DIRECTION_RIGHT -> view?.width?.toFloat() ?: 0f
+            //      else -> view?.height?.toFloat() ?: 0f // 默认向下
+            //  }
+
+            swipeDismissAnimator = ValueAnimator.ofFloat(dragPercent, 1f).apply {
+                duration = dialogConfig.swipeDismissAnimDuration
+                interpolator = AccelerateInterpolator()
+                addUpdateListener { animation ->
+                    val value = animation.animatedValue as Float
+                    updateViewPosition(value)
+                }
+                addListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        dismiss()
+                    }
+                })
+                start()
+            }
+        }
+
+        /**
+         * 重置位置动画
+         */
+        fun resetPositionWithAnimation() {
+            swipeDismissAnimator = ValueAnimator.ofFloat(dragPercent, 0f).apply {
+                duration = dialogConfig.swipeDismissAnimDuration
+                interpolator = DecelerateInterpolator()
+                addUpdateListener { animation ->
+                    val value = animation.animatedValue as Float
+                    updateViewPosition(value)
+                }
+                start()
+            }
+        }
+
+        /**
+         * 处理拖动结束
+         */
+        fun handleDragEnd(event: MotionEvent) {
+            val velocity = calculateVelocity(event)
+            val shouldDismiss = shouldDismissDialog(velocity)
+
+            if (shouldDismiss) {
+                dismissWithAnimation()
+            } else {
+                resetPositionWithAnimation()
+            }
+        }
+
+        /**
+         * 检查滑动方向是否有效
+         */
+        fun isSwipeDirectionValid(event: MotionEvent): Boolean {
+            val deltaY = event.rawY - initialTouchY
+            val deltaX = event.rawX - initialTouchX
+
+            return when (dialogConfig.swipeDirection) {
+                SwipeDirection.SWIPE_DIRECTION_DOWN -> deltaY > 0 && Math.abs(deltaY) > Math.abs(deltaX)
+                SwipeDirection.SWIPE_DIRECTION_UP -> deltaY < 0 && Math.abs(deltaY) > Math.abs(deltaX)
+                SwipeDirection.SWIPE_DIRECTION_LEFT -> deltaX < 0 && Math.abs(deltaX) > Math.abs(deltaY)
+                SwipeDirection.SWIPE_DIRECTION_RIGHT -> deltaX > 0 && Math.abs(deltaX) > Math.abs(deltaY)
+                SwipeDirection.SWIPE_DIRECTION_ANY -> true
+                else -> deltaY > 0 && Math.abs(deltaY) > Math.abs(deltaX) // 默认向下
+            }
+        }
+
+        /**
+         * 正式处理监听swipe事件
+         */
+        view?.setOnTouchListener { v, event ->
+            if (swipeDismissAnimator != null && swipeDismissAnimator!!.isRunning) {
+                // 动画正在进行中，不处理触摸事件
+                return@setOnTouchListener true
+            }
+
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    initialTouchY = event.rawY
+                    initialTouchX = event.rawX
+                    isDragging = false
+                    dragPercent = 0f
+                    true
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+                    if (!isDragging && isSwipeDirectionValid(event)) {
+                        isDragging = true
+                    }
+
+                    if (isDragging) {
+                        handleDrag(event)
+                    }
+                    true
+                }
+
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    if (isDragging) {
+                        handleDragEnd(event)
+                    }
+                    isDragging = false
+                    true
+                }
+
+                else -> false
+            }
+        }
+    }
+
 
     /**
      * 设置展示动画

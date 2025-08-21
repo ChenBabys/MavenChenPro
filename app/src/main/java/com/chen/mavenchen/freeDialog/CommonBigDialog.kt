@@ -11,7 +11,9 @@ import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import androidx.fragment.app.FragmentManager
 import com.chen.freedialog.BaseFreeDialogFragment
+import com.chen.freedialog.config.SwipeDirection
 import com.chen.mavenchen.R
+import com.chen.mavenchen.databinding.DialogCommonBigInputValueBinding
 import com.chen.mavenchen.databinding.DialogCommonInputValueBinding
 
 
@@ -21,22 +23,31 @@ import com.chen.mavenchen.databinding.DialogCommonInputValueBinding
  * Description: 4.0.0版本开始，公用的名称、值输入框.
  * fragmentManager必须是外部传入的，内部的是没有依赖于任何父容器的，用不了
  */
-class CommonInputValueDialog(private val fragmentManager: FragmentManager) : BaseFreeDialogFragment<DialogCommonInputValueBinding>() {
+class CommonBigDialog(private val fragmentManager: FragmentManager) : BaseFreeDialogFragment<DialogCommonBigInputValueBinding>() {
     private var mOnActionListener: OnActionListener? = null
     private val config = Config()
 
-    override fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): DialogCommonInputValueBinding {
-        return DialogCommonInputValueBinding.inflate(inflater, container, false)
+    override fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): DialogCommonBigInputValueBinding {
+        return DialogCommonBigInputValueBinding.inflate(inflater, container, false)
     }
 
-    override fun initView(binding: DialogCommonInputValueBinding) {
+    override fun initView(binding: DialogCommonBigInputValueBinding) {
         // 固定宽度
         dialogConfig.apply {
-            fixWidth = 800
+            fixWidth = ViewGroup.LayoutParams.MATCH_PARENT
             isTouchOutSideCancelable = true
             softInputAdjustNothing = true
+
+            dragViewId = R.id.tv_cancel
+
+            // 手势滑动关闭
+            swipeToDismissEnabled = true
+            swipeDirection = SwipeDirection.SWIPE_DIRECTION_DOWN
+            swipeThreshold = 0.25f
+            swipeVelocityThreshold = 800f
+            swipeDismissAnimDuration = 300
         }
-         dialogConfig.dragViewId = R.id.tv_confirm
+
 
         //默认隐藏描述，除非输入描述
         binding.tvCancel.setOnClickListener {
@@ -157,7 +168,7 @@ class CommonInputValueDialog(private val fragmentManager: FragmentManager) : Bas
     }
 
 
-    fun setTitle(hintTitle: String): CommonInputValueDialog {
+    fun setTitle(hintTitle: String): CommonBigDialog {
         config.hintTitle = hintTitle
         return this
     }
@@ -165,7 +176,7 @@ class CommonInputValueDialog(private val fragmentManager: FragmentManager) : Bas
     /**
      * 填充输入框内的提示
      */
-    fun setInputHint(hintInput: String): CommonInputValueDialog {
+    fun setInputHint(hintInput: String): CommonBigDialog {
         config.hintInput = hintInput
         return this
     }
@@ -173,17 +184,17 @@ class CommonInputValueDialog(private val fragmentManager: FragmentManager) : Bas
     /**
      * 设置底部的描述
      */
-    fun setDescribe(describe: String): CommonInputValueDialog {
+    fun setDescribe(describe: String): CommonBigDialog {
         config.describe = describe
         return this
     }
 
-    fun setFocusAndShowInput(isFocus: Boolean): CommonInputValueDialog {
+    fun setFocusAndShowInput(isFocus: Boolean): CommonBigDialog {
         config.focusAndShowInput = isFocus
         return this
     }
 
-    fun setDefaultInputString(inputStr: String): CommonInputValueDialog {
+    fun setDefaultInputString(inputStr: String): CommonBigDialog {
         config.defaultInputString = inputStr
         return this
     }
@@ -191,33 +202,33 @@ class CommonInputValueDialog(private val fragmentManager: FragmentManager) : Bas
     /**
      *  全部选中并且获取焦点(暂不需要)
      */
-    fun setSelectAllOnFocus(isFocus: Boolean): CommonInputValueDialog {
+    fun setSelectAllOnFocus(isFocus: Boolean): CommonBigDialog {
         config.selectAllOnFocus = isFocus
         return this
     }
 
-    fun setMaxInputLength(maxLength: Int): CommonInputValueDialog {
+    fun setMaxInputLength(maxLength: Int): CommonBigDialog {
         config.maxInputLength = maxLength
         return this
     }
 
-    fun setCancelText(cancelText: String): CommonInputValueDialog {
+    fun setCancelText(cancelText: String): CommonBigDialog {
         config.cancelText = cancelText
         return this
     }
 
-    fun setConfirmText(confirmText: String): CommonInputValueDialog {
+    fun setConfirmText(confirmText: String): CommonBigDialog {
         config.confirmText = confirmText
         return this
     }
 
-    fun setConfirmTextColor(color: Int): CommonInputValueDialog {
+    fun setConfirmTextColor(color: Int): CommonBigDialog {
         config.confirmTextColor = color
         return this
     }
 
 
-    fun setActionListener(mOnActionListener: OnActionListener): CommonInputValueDialog {
+    fun setActionListener(mOnActionListener: OnActionListener): CommonBigDialog {
         this.mOnActionListener = mOnActionListener
         return this
     }
@@ -225,7 +236,7 @@ class CommonInputValueDialog(private val fragmentManager: FragmentManager) : Bas
     /**
      * 展示弹框
      */
-    fun show(): CommonInputValueDialog {
+    fun show(): CommonBigDialog {
         show(fragmentManager, this.javaClass.simpleName)
         return this
     }

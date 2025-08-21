@@ -7,6 +7,7 @@ import android.view.Gravity
 import android.view.ViewGroup
 import com.chen.freedialog.config.AnchorGravity
 import com.chen.freedialog.config.DialogAnim
+import com.chen.freedialog.config.SwipeDirection
 
 /**
  * 弹框的配置项，
@@ -50,6 +51,7 @@ class DialogConfigs : Parcelable {
     /**
      * 键盘方式
      */
+    @Deprecated("暂时不用")
     @JvmField
     var softMode: Int = 0
 
@@ -61,7 +63,7 @@ class DialogConfigs : Parcelable {
     var canDragWhenHasDragViewId: Boolean = true
 
     /**
-     * 可以拖拽的View的id
+     * 可以拖拽的View的id,若存在drag事件，则swipe事件失效，以drag这种偏业务的功能优先
      */
     @JvmField
     var dragViewId: Int = 0
@@ -69,24 +71,31 @@ class DialogConfigs : Parcelable {
     /**
      * 长按触发时间，这个占时没用到
      */
+    @Deprecated("暂时不用")
     @JvmField
     var timeMillis: Int = 300
 
+    @Deprecated("暂时不用")
     @JvmField
     var isLongClickModule: Boolean = false
 
+    @Deprecated("暂时不用")
     @JvmField
     var lastX: Float = 0f
 
+    @Deprecated("暂时不用")
     @JvmField
     var lastY: Float = 0f
 
+    @Deprecated("暂时不用")
     @JvmField
     var xDown: Float = 0f
 
+    @Deprecated("暂时不用")
     @JvmField
     var yDown: Float = 0f
 
+    @Deprecated("暂时不用")
     @JvmField
     var style: Int = 0
 
@@ -151,6 +160,31 @@ class DialogConfigs : Parcelable {
      */
     var softInputAdjustNothing: Boolean = false
 
+    /**
+     *  是否启用手势滑动关闭，若存在drag事件，则将swipe事件全部失效掉，不然影响体验
+     */
+    var swipeToDismissEnabled: Boolean = false
+
+    /**
+     * 可滑动的方向
+     */
+    var swipeDirection: Int = SwipeDirection.SWIPE_DIRECTION_DOWN
+
+    /**
+     * 滑动阈值（屏幕高度的百分比）
+     */
+    var swipeThreshold: Float = 0.3f
+
+    /**
+     * 滑动速度阈值（像素/秒）
+     */
+    var swipeVelocityThreshold: Float = 1000f
+
+    /**
+     * 滑动关闭动画时长（注意和默认的动画无关系，只专注于swipe）
+     */
+    var swipeDismissAnimDuration: Long  = 250L
+
     constructor()
 
     private constructor(p: Parcel) {
@@ -183,6 +217,11 @@ class DialogConfigs : Parcelable {
         isInterceptOutSideEvent = p.readByte().toInt() != 0
         showAnimation = p.readInt()
         softInputAdjustNothing = p.readByte().toInt() != 0
+        swipeToDismissEnabled = p.readByte().toInt() != 0
+        swipeDirection = p.readInt()
+        swipeThreshold = p.readFloat()
+        swipeVelocityThreshold = p.readFloat()
+        swipeDismissAnimDuration = p.readLong()
     }
 
     override fun describeContents(): Int = 0
@@ -220,6 +259,11 @@ class DialogConfigs : Parcelable {
         dest.writeByte((if (isInterceptOutSideEvent) 1 else 0).toByte())
         dest.writeInt(showAnimation)
         dest.writeByte((if (softInputAdjustNothing) 1 else 0).toByte())
+        dest.writeByte((if (swipeToDismissEnabled) 1 else 0).toByte())
+        dest.writeInt(swipeDirection)
+        dest.writeFloat(swipeThreshold)
+        dest.writeFloat(swipeVelocityThreshold)
+        dest.writeLong(swipeDismissAnimDuration)
     }
 
     companion object CREATOR : Creator<DialogConfigs> {

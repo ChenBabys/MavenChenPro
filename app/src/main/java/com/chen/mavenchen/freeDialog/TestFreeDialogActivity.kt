@@ -28,12 +28,20 @@ class TestFreeDialogActivity : AppCompatActivity() {
      */
     private fun initView() {
         val openDialog = findViewById<TextView>(R.id.open_dialog)
+        val openDialog2 = findViewById<TextView>(R.id.open_dialog2)
         openDialog.setOnClickListener {
             CommonInputValueDialog(supportFragmentManager)
                 .setTitle("哈哈哈哈")
                 .setFocusAndShowInput(true)
                 .setDescribe("测试一下")
                 .setInputHint("输入文本测试")
+                .show()
+        }
+        openDialog2.setOnClickListener {
+            CommonBigDialog(supportFragmentManager)
+                .setTitle("哈哈哈哈2")
+                .setDescribe("测试一下2")
+                .setInputHint("输入文本测试2")
                 .show()
         }
     }
