@@ -38,7 +38,8 @@ class CommonInputValueDialog(private val fragmentManager: FragmentManager) : Bas
         }
 
         // 关于这个drag功能，是有效的，但这个MavenChenPro项目有问题，实际用到其他项目是可行的，不用理
-         dialogConfig.dragViewId = R.id.tv_confirm
+         // dialogConfig.dragViewId = R.id.tv_confirm
+         dialogConfig.dragViewId = binding.tvConfirm.id
 
         //默认隐藏描述，除非输入描述
         binding.tvCancel.setOnClickListener {

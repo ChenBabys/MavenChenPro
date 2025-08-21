@@ -39,7 +39,8 @@ class CommonBigDialog(private val fragmentManager: FragmentManager) : BaseFreeDi
             softInputAdjustNothing = true
 
             // 关于这个drag功能，是有效的，但这个MavenChenPro项目有问题，实际用到其他项目是可行的，不用理
-            dragViewId = R.id.tv_cancel
+            // dialogConfig.dragViewId = R.id.tv_confirm
+            dialogConfig.dragViewId = binding.tvConfirm.id
 
             // 手势滑动关闭
             swipeToDismissEnabled = true
